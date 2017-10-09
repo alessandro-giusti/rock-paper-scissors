@@ -1,5 +1,7 @@
-A specific split from Fabrizio, with 100 images for testing sampled from D1-4.
-Options:
+A specific split built by Fabrizio.
+Images in the "testing" directory contain are sampled from D1-4 (and are not included in D1-4).
+
+Options for training-testing splits:
 - Train on D1-D5, test on "testing" (easy)
 - Train on D1-D4 + "testing", test on D5 (hard)
 
