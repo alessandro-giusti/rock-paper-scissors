@@ -1,5 +1,15 @@
-A specific split from Fabrizio, with 100 images for testing sampled from D1-4.
-Options:
-- Train on D1-D5, test on "testing" (easy)
-- Train on D1-D4 + "testing", test on D5 (hard)
+Important note: this dataset has not been properly anonymized yet (faces of some people could be visible) and should not be published online.
+It is provided for review purposes only.
+
+
+Each directory D1 -> D5 contains data acquired during a different day by different people.
+c0 - rock
+c1 - paper
+c2 - scissors
+
+Images in the "testing" directory are sampled from datasets D1 -> D4 (and are not included in directories D1 -> D4) and are evenly distributed among classes (33 rock, 34 paper, 33 scissors = 100 images)
+
+Therefore one can use the following splits.
+- Train on D1-D5, test on "testing" (easy, because testing images are from the same days/people of training images)
+- Train on D1-D4 + "testing", test on D5 (hard, because testing images are from a completely different day that is not represented in the training data)
 
