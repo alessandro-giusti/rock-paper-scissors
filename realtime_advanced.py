@@ -31,14 +31,22 @@ cap = cv2.VideoCapture(0)
 from keras import backend as K
 K.set_learning_phase(0)
 model = keras.models.load_model(model_name)
-process = K.function([model.layers[0].input], [model.layers[-1].output])
+process = K.function([model.layers[0].input], [model.layers[-1].output,model.layers[0].output,model.layers[2].output,model.layers[12].output])
 def analyze(frame):
     data = process([frame[np.newaxis,:,:,:]])
     return data[0][0,:],[d[0,:] for d in data[1:]]
 
 windowname="Image"
+#cv2.namedWindow(windowname, cv2.WND_PROP_FULLSCREEN)
 cv2.namedWindow(windowname)
 cv2.moveWindow(windowname, 0, 0)
+
+inner="Inner"
+cv2.namedWindow(inner)
+cv2.moveWindow(inner, 700, 0)
+#cv2.setWindowProperty(windowname, cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
+#cv2.startWindowThread()
+
 
 def preprocess(im):
     return skimage.transform.resize(cv2.cvtColor(im, cv2.COLOR_BGR2RGB),(64,64))
@@ -55,6 +63,14 @@ def drawbars(im, values):
         else:
             im[y0:y1,x0:x1,:] = classimages0[i][:,:,0:3]
             
+def drawtinybars(im, values):
+    barh=100
+    barw=3
+    for i,v in enumerate(values):
+        x0, x1 = i*barw, i*barw+barw
+        cv2.rectangle(im, (x0,0), (x1, max(0,int(v*barh))), (255,255,255), -1)
+
+
             
 while(True):
     ret, im = cap.read()
@@ -68,7 +84,15 @@ while(True):
     
     cv2.circle(im, (w//2, h//2), ssz, (255,255,255), 5)
     drawbars(im,out)
+    drawtinybars(im,hidden[-1])
     cv2.imshow(windowname,im)
+
+    with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            viz=cv2.cvtColor(skimage.img_as_ubyte(frame), cv2.COLOR_BGR2RGB)
+            
+    viz=skimage.transform.rescale(viz, 10, order=0)
+    cv2.imshow(inner,viz)
     
     key = cv2.waitKey(10)
     if key & 0xFF == ord('q'):
