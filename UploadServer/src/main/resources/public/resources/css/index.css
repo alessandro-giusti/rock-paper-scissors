@@ -1,0 +1,19 @@
+.form-signin {
+    max-width: 330px;
+    padding: 15px;
+    margin: 0 auto;
+}
+
+.form-group {
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
+#map-canvas {
+  height: 500px;
+  width: 100%;
+}
+
+.table-responsive {
+  margin-top: 20px;
+}
