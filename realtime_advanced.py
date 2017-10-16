@@ -11,6 +11,7 @@ import warnings
 model_name="models/model_venus.model"
 ssz=150
 barw=50
+mkviz=False
 
 classimages0=[]
 classimages1=[]
@@ -28,28 +29,64 @@ cap = cv2.VideoCapture(0)
 cap.release()
 cap = cv2.VideoCapture(0)
 
+def preprocess(im):
+    return skimage.transform.resize(cv2.cvtColor(im, cv2.COLOR_BGR2RGB),(64,64))
+
 from keras import backend as K
 K.set_learning_phase(0)
 model = keras.models.load_model(model_name)
-process = K.function([model.layers[0].input], [model.layers[-1].output,model.layers[0].output,model.layers[2].output,model.layers[12].output])
+process = K.function([model.layers[0].input], 
+                     [model.layers[-1].output,
+                      model.layers[0].output,
+                      #model.layers[2].output,
+                      model.layers[5].output,
+                      model.layers[8].output,
+                      model.layers[12].output])
 def analyze(frame):
     data = process([frame[np.newaxis,:,:,:]])
-    return data[0][0,:],[d[0,:] for d in data[1:]]
+    return data[0][0,:],[d[0,:] for d in data[1:-1]],data[-1][0,:]
+
+out,hidden,dense = analyze(preprocess(np.zeros((100,100,3),"uint8")))
+
+remap_std=0.3
+def remap(m):
+    return np.clip(((m-np.mean(m))/np.std(m)*remap_std+0.5)*255,0,255).astype("uint8")
+
+nrowss=[6,5,4]
+
+
+def mkmappings_color():
+    mappings=[np.random.randint(0,hidden[i].shape[2],(nrowss[i],3)) for i in range(len(hidden))] 
+    densemapping=np.random.randint(0,dense.shape[0],(7,80,3))
+    return mappings,densemapping
+
+def mkmappings_gray():
+    mappings=[np.random.randint(0,hidden[i].shape[2],(nrowss[i],1)) for i in range(len(hidden))] 
+    mappings=[np.repeat(mapping,3,axis=1) for mapping in mappings]
+    densemapping=np.random.randint(0,dense.shape[0],(7,80,1))
+    densemapping=np.repeat(densemapping,3,axis=2)
+    return mappings,densemapping
+
+mappings,densemapping=mkmappings_gray()
+
+def mkcolumn(h,mapping,height):
+    hm=np.concatenate([remap(h[:,:,mapping[i,:]]) for i in range(mapping.shape[0])], axis=0)
+    return skimage.transform.resize(hm,[height,int(height/hm.shape[0]*hm.shape[1])],order=0,preserve_range=True).astype("uint8")
+
 
 windowname="Image"
 #cv2.namedWindow(windowname, cv2.WND_PROP_FULLSCREEN)
-cv2.namedWindow(windowname)
+cv2.namedWindow(windowname, cv2.WND_PROP_FULLSCREEN)
 cv2.moveWindow(windowname, 0, 0)
+cv2.setWindowProperty(windowname, cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
 
-inner="Inner"
-cv2.namedWindow(inner)
-cv2.moveWindow(inner, 700, 0)
+#inner="Inner"
+#cv2.namedWindow(inner)
+#cv2.moveWindow(inner, 700, 0)
 #cv2.setWindowProperty(windowname, cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
 #cv2.startWindowThread()
 
 
-def preprocess(im):
-    return skimage.transform.resize(cv2.cvtColor(im, cv2.COLOR_BGR2RGB),(64,64))
 
 def drawbars(im, values):
     barh=200
@@ -80,21 +117,46 @@ while(True):
     c0, c1 = w//2-ssz, w//2+ssz
     
     frame = preprocess(im[r0:r1,c0:c1,:])
-    out,hidden = analyze(frame)
+    out,hidden,dense = analyze(frame)
     
     cv2.circle(im, (w//2, h//2), ssz, (255,255,255), 5)
     drawbars(im,out)
-    drawtinybars(im,hidden[-1])
-    cv2.imshow(windowname,im)
+    #drawtinybars(im,dense)
 
-    with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            viz=cv2.cvtColor(skimage.img_as_ubyte(frame), cv2.COLOR_BGR2RGB)
-            
-    viz=skimage.transform.rescale(viz, 10, order=0)
-    cv2.imshow(inner,viz)
+    if(mkviz):
+        with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                viz=cv2.cvtColor(skimage.img_as_ubyte(frame), cv2.COLOR_BGR2RGB)
+                
+        #viz=skimage.transform.rescale(viz, 10, order=0)
+        viz=np.concatenate([mkcolumn(h,mapping,im.shape[0]) for h,mapping in zip(hidden,mappings)],1)
+        im=np.concatenate([np.pad(im,((0,0),(0,5),(0,0)),mode="constant"),viz],1)
+        viz=remap(dense[densemapping])
+        viz=skimage.transform.resize(viz,(int(viz.shape[0]/viz.shape[1]*im.shape[1]),im.shape[1]),order=0,preserve_range=True).astype("uint8")
+        im=np.concatenate([np.pad(im,((0,5),(0,0),(0,0)),mode="constant"),viz],0)
+        
+    cv2.imshow(windowname,im)
+    #cv2.imshow(inner,viz)
     
-    key = cv2.waitKey(10)
+    key = cv2.waitKey(20)
+    if key & 0xFF == ord('1'):
+        remap_std=0.1
+    if key & 0xFF == ord('2'):
+        remap_std=0.2
+    if key & 0xFF == ord('3'):
+        remap_std=0.3
+    if key & 0xFF == ord('4'):
+        remap_std=0.4
+    if key & 0xFF == ord('5'):
+        remap_std=0.5
+    if key & 0xFF == ord('c'):
+        mappings,densemapping=mkmappings_color()
+        mkviz=True
+    if key & 0xFF == ord('g'):
+        mappings,densemapping=mkmappings_gray()
+        mkviz=True
+    if key & 0xFF == ord('v'):
+        mkviz=not mkviz
     if key & 0xFF == ord('q'):
         break
 
