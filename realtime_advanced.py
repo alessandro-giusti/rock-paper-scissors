@@ -7,6 +7,11 @@ import skimage.viewer
 import keras
 import warnings
 
+import argparse
+parser = argparse.ArgumentParser(description='Rock-paper-scissors realtime demo.')
+parser.add_argument('--fullscreen', action='store_true', help='run in fullscreen')
+args = parser.parse_args()
+
 # User options
 model_name="models/model_venus.model"
 ssz=150
@@ -75,10 +80,12 @@ def mkcolumn(h,mapping,height):
 
 
 windowname="Image"
-#cv2.namedWindow(windowname, cv2.WND_PROP_FULLSCREEN)
-cv2.namedWindow(windowname, cv2.WND_PROP_FULLSCREEN)
-cv2.moveWindow(windowname, 0, 0)
-cv2.setWindowProperty(windowname, cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
+if(args.fullscreen):
+	cv2.namedWindow(windowname, cv2.WND_PROP_FULLSCREEN)
+	cv2.moveWindow(windowname, 0, 0)
+	cv2.setWindowProperty(windowname, cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
+else:
+	cv2.namedWindow(windowname)
 
 #inner="Inner"
 #cv2.namedWindow(inner)
