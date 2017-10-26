@@ -21,6 +21,7 @@ import android.media.ExifInterface;
 import android.os.Build;
 import android.os.Bundle;
 import android.app.Activity;
+import android.provider.Settings;
 import android.support.v4.app.FragmentActivity;
 import android.support.v7.app.AppCompatActivity;
 import android.text.Layout;
@@ -29,16 +30,20 @@ import android.view.Surface;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
+import android.widget.Spinner;
+import android.widget.SpinnerAdapter;
+import android.widget.TextView;
 
 public class MainActivity extends Activity {
     private final static String TAG = "RPS";
     ImageView imageSmallPreview;
-    ImageView imageBigPreview;
     ImageView labelGiver;
     Bitmap image;
 	String label;
@@ -46,13 +51,14 @@ public class MainActivity extends Activity {
 	Activity context;
 	Preview preview;
 	Camera camera;
-	Button exitButton;
-	ImageView fotoButton;
+    ImageView fotoButton;
+    Spinner sp;
+    ArrayAdapter<String> spAdp;
+    ImageView[] tests;
 	LinearLayout progressLayout;
     ImageView leftButton;
     ImageView rightButton;
     ImageView deleteButton;
-    RelativeLayout secondMenu;
 	String path = "/sdcard/KutCamera/cache/images/";
 
 	
@@ -64,21 +70,54 @@ public class MainActivity extends Activity {
 		context=this;
         image = null;
         label = "Rock";
-        leftButton = (ImageView) findViewById(R.id.go_left);
-        rightButton = (ImageView) findViewById(R.id.go_right);
-        deleteButton  = (ImageView) findViewById(R.id.delete);
-        secondMenu = (RelativeLayout) findViewById(R.id.RelativeLayout5);
+
 		fotoButton = (ImageView) findViewById(R.id.take_pic);
-		exitButton = (Button) findViewById(R.id.button_exit);
+        sp = (Spinner) findViewById(R.id.spinner);
+        spAdp = new ArrayAdapter<String>(this, R.layout.row);
         labelGiver =  (ImageView) findViewById(R.id.label_view);
         imageSmallPreview = (ImageView) findViewById(R.id.image_small_preview);
-        imageBigPreview = (ImageView) findViewById(R.id.image_big_preview);
 		progressLayout = (LinearLayout) findViewById(R.id.progress_layout);
         previewSurface=(SurfaceView) findViewById(R.id.KutCameraFragment);
 		preview = new Preview(this,previewSurface);
 		FrameLayout frame = (FrameLayout) findViewById(R.id.preview);
 		frame.addView(preview);
 		preview.setKeepScreenOn(true);
+
+        spAdp.addAll(new String[]{"Training, Testing"});
+        sp.setAdapter(spAdp);
+
+        sp.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener()
+        {
+
+            @Override
+            public void onItemSelected(AdapterView<?> arg0, View arg1, int arg2, long arg3) {
+                TextView txt=(TextView) arg1.findViewById(R.id.rowtext);
+                String s=txt.getText().toString();
+                if (s.equals("Training")){}
+                else{}//TODO
+
+
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> arg0)
+            { }
+        });
+
+        tests=new ImageView[]{
+                (ImageView) findViewById(R.id.image_test1),
+                (ImageView) findViewById(R.id.image_test2),
+                (ImageView) findViewById(R.id.image_test3),
+                (ImageView) findViewById(R.id.image_test4),
+                (ImageView) findViewById(R.id.image_test5),
+                (ImageView) findViewById(R.id.image_test6),
+                (ImageView) findViewById(R.id.image_test7),
+                (ImageView) findViewById(R.id.image_test8),
+                (ImageView) findViewById(R.id.image_test9)
+        };
+
+
+
 		fotoButton.setOnClickListener(new OnClickListener() {
 
 			@Override
@@ -89,7 +128,7 @@ public class MainActivity extends Activity {
 				} catch (Exception e) {
 
 				}
-				exitButton.setClickable(false);
+
 				fotoButton.setClickable(false);
 				progressLayout.setVisibility(View.VISIBLE);
 			}
@@ -99,52 +138,18 @@ public class MainActivity extends Activity {
 
 			@Override
 			public void onClick(View v) {
-				imageBigPreview.setImageBitmap(image);
-                imageBigPreview.bringToFront();
-                imageBigPreview.invalidate();
 
-
-                secondMenu.setVisibility(View.VISIBLE);
 
 			}
 		});
 
-        imageBigPreview.setOnClickListener(new OnClickListener() {
-
+        imageSmallPreview.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
-            public void onClick(View v) {
-                imageBigPreview.setImageBitmap(null);
-                secondMenu.setVisibility(View.INVISIBLE);
-
+            public boolean onLongClick(View view) {
+                return false;
             }
         });
 
-        leftButton.setOnClickListener(new OnClickListener() {
-
-            @Override
-            public void onClick(View v) {
-               Log.d(TAG, "left");
-
-            }
-        });
-
-        rightButton.setOnClickListener(new OnClickListener() {
-
-            @Override
-            public void onClick(View v) {
-                Log.d(TAG, "right");
-
-            }
-        });
-
-        deleteButton.setOnClickListener(new OnClickListener() {
-
-            @Override
-            public void onClick(View v) {
-                Log.d(TAG, "remove");
-
-            }
-        });
 
 
         labelGiver.setOnClickListener(new OnClickListener() {
@@ -342,20 +347,34 @@ public class MainActivity extends Activity {
 
 
 			imageSmallPreview.setImageBitmap(imagePreview);
-
+            String devId=Settings.Secure.getString(getApplicationContext().getContentResolver(), Settings.Secure.ANDROID_ID);
 
             try {
-                HttpClient.uploadImage(foto,label);
+                HttpClient.uploadImage(foto,label, devId);
             } catch (Exception e) {
                 Log.e(TAG, "Error uploading: " + e.getMessage() );
 
             }
 
 
+            if ( label.equals("Paper")) {
+                for (ImageView test : tests){
+                    test.setImageResource(R.drawable.rps_p);
+                }
+            } else if ( label.equals("Rock")) {
+                for (ImageView test : tests){
+                    test.setImageResource(R.drawable.rps_r);
+                }
+            }  else if ( label.equals("Scissors")) {
+                for (ImageView test : tests){
+                    test.setImageResource(R.drawable.rps_s);
+                }
+            }
+
 			fotoButton.setClickable(true);
 			camera.startPreview();
 			progressLayout.setVisibility(View.GONE);
-			exitButton.setClickable(true);
+
 
 		}
 	};

@@ -37,6 +37,12 @@
                     android:layout_width="match_parent"
                     android:layout_height="match_parent" >
 
+                    <Spinner
+                        android:id="@+id/spinner"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentEnd="true"
+                        android:layout_alignParentTop="true" />
                     <TextView
                         android:id="@+id/textViewReferan"
                         android:layout_width="wrap_content"
@@ -85,27 +91,141 @@
                 <ImageView
                     android:id="@+id/take_pic"
 
-                    android:layout_width="80dp"
-                    android:layout_height="80dp"
+                    android:layout_width="90dp"
+                    android:layout_height="90dp"
                     android:layout_centerHorizontal="true"
                     android:layout_centerVertical="true"
                     android:src="@drawable/camera" />
 
                 <ImageView
                     android:id="@+id/image_small_preview"
-                    android:layout_width="80dp"
-                    android:layout_height="80dp"
+                    android:layout_width="90dp"
+                    android:layout_height="90dp"
                     android:layout_alignParentLeft="true"
                     android:layout_centerVertical="true"
-                    android:layout_marginRight="5dp"
-                    android:padding="5dp"
+
+                    android:padding="10dp"
                     android:scaleType="fitCenter"
-                    android:src="@drawable/fotocekicon" />
+                    android:src="@drawable/fotocekicon"
+
+
+                    />
+
+                <ImageView
+                    android:id="@+id/image_test1"
+                    android:layout_width="10dp"
+                    android:layout_height="10dp"
+                    android:layout_alignParentLeft="true"
+
+
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/fotocekicon"
+
+
+                    />
+                <ImageView
+                    android:id="@+id/image_test2"
+                    android:layout_width="10dp"
+                    android:layout_height="10dp"
+                    android:layout_alignParentLeft="true"
+                    android:layout_marginStart="10dp"
+
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/fotocekicon"
+
+
+                    />
+                <ImageView
+                    android:id="@+id/image_test3"
+                    android:layout_width="10dp"
+                    android:layout_height="10dp"
+                    android:layout_alignParentLeft="true"
+                    android:layout_marginStart="20dp"
+
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/fotocekicon"
+
+
+                    />
+                <ImageView
+                    android:id="@+id/image_test4"
+                    android:layout_width="10dp"
+                    android:layout_height="10dp"
+                    android:layout_alignParentLeft="true"
+                    android:layout_marginStart="30dp"
+
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/fotocekicon"
+
+
+                    />
+                <ImageView
+                    android:id="@+id/image_test5"
+                    android:layout_width="10dp"
+                    android:layout_height="10dp"
+                    android:layout_alignParentLeft="true"
+                    android:layout_marginStart="40dp"
+
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/fotocekicon"
+
+
+                    />
+                <ImageView
+                    android:id="@+id/image_test6"
+                    android:layout_width="10dp"
+                    android:layout_height="10dp"
+                    android:layout_alignParentLeft="true"
+                    android:layout_marginStart="50dp"
+
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/fotocekicon"
+
+
+                    />
+                <ImageView
+                    android:id="@+id/image_test7"
+                    android:layout_width="10dp"
+                    android:layout_height="10dp"
+                    android:layout_alignParentLeft="true"
+                    android:layout_marginStart="60dp"
+
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/fotocekicon"
+
+
+                    />
+                <ImageView
+                    android:id="@+id/image_test8"
+                    android:layout_width="10dp"
+                    android:layout_height="10dp"
+                    android:layout_alignParentLeft="true"
+                    android:layout_marginStart="70dp"
+
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/fotocekicon"
+
+
+                    />
+                <ImageView
+                    android:id="@+id/image_test9"
+                    android:layout_width="10dp"
+                    android:layout_height="10dp"
+                    android:layout_alignParentLeft="true"
+                    android:layout_marginStart="80dp"
+
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/fotocekicon"
+
+
+                    />
+
+
 
                 <ImageView
                     android:id="@+id/label_view"
-                    android:layout_width="80dp"
-                    android:layout_height="80dp"
+                    android:layout_width="90dp"
+                    android:layout_height="90dp"
                     android:layout_alignParentRight="true"
                     android:layout_centerVertical="true"
                     android:layout_marginLeft="5dp"
@@ -115,52 +235,6 @@
                     android:src="@drawable/rps_r" />
 
             </RelativeLayout>
-
-            <RelativeLayout
-                android:id="@+id/RelativeLayout5"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_alignParentBottom="true"
-                android:layout_alignParentLeft="true"
-                android:alpha="1"
-                android:background="@android:color/black"
-                android:padding="10dp"
-                android:visibility="invisible">
-
-
-                <ImageView
-                    android:id="@+id/delete"
-                    android:layout_width="80dp"
-                    android:layout_height="80dp"
-                    android:layout_centerHorizontal="true"
-                    android:layout_centerVertical="true"
-                    android:src="@android:drawable/ic_delete" />
-
-                <ImageView
-                    android:id="@+id/go_left"
-                    android:layout_width="80dp"
-                    android:layout_height="80dp"
-                    android:layout_alignParentLeft="true"
-                    android:layout_centerVertical="true"
-                    android:layout_marginRight="5dp"
-                    android:padding="5dp"
-                    android:scaleType="fitCenter"
-                    android:src="@android:drawable/ic_media_rew" />
-
-                <ImageView
-                    android:id="@+id/go_right"
-                    android:layout_width="80dp"
-                    android:layout_height="80dp"
-                    android:layout_alignParentRight="true"
-                    android:layout_centerVertical="true"
-                    android:layout_marginLeft="5dp"
-                    android:padding="5dp"
-                    android:scaleType="fitCenter"
-                    android:src="@android:drawable/ic_media_ff"
-                    android:tag="R" />
-
-            </RelativeLayout>
-
 
 
             <RelativeLayout
@@ -206,10 +280,6 @@
                     android:layout_centerHorizontal="true"
                     android:layout_centerVertical="true"
                     />
-
-
-
-
 
 
 

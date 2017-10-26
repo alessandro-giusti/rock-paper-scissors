@@ -2,6 +2,8 @@ package com.example.feder.RPS;
 
 import android.util.Log;
 
+import com.google.gson.JsonObject;
+
 import java.io.File;
 
 import okhttp3.MediaType;
@@ -61,7 +63,7 @@ interface UploadService {
 
     @Multipart
     @POST("/photo")//THIS IS SO WRONG :/ TODO
-    Call<ResponseBody> updateUser(@Part("label") RequestBody label, @Part MultipartBody.Part image);
+    Call<ResponseBody> updateUser(@Part("label") RequestBody label, @Part MultipartBody.Part image,@Part("label") RequestBody deviceId);
 }
 
 
@@ -69,7 +71,9 @@ interface UploadService {
 
 public class HttpClient {
 
-    public static void uploadImage(File image, String targhetta) {
+    private final static String TAG = "RPS";
+
+    public static void uploadImage(File image, String targhetta, String devId) {
         UploadService service = ServiceGenerator.createService(UploadService.class);
 
         RequestBody requestFile = RequestBody.create(MediaType.parse("multipart/form-data"), image);
@@ -78,17 +82,28 @@ public class HttpClient {
         String targhetta2 = targhetta;
         if (targhetta2 == null) targhetta2 = "error";
         RequestBody label = RequestBody.create(MediaType.parse("multipart/form-data"), targhetta2);
-        Call<ResponseBody> call = service.updateUser(label, body);
+
+
+        String devId2 = devId;
+        if (devId2 == null) devId2 = "error";
+        RequestBody deviceId = RequestBody.create(MediaType.parse("multipart/form-data"), devId2);
+
+        Call<ResponseBody> call = service.updateUser(label, body, deviceId);
 
         call.enqueue(new Callback<ResponseBody>() {
             @Override
             public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
-                Log.v("Upload", "success");
+                ResponseBody body =response.body();
+                JsonObject post = new JsonObject().get(body.toString()).getAsJsonObject();
+                Log.d(TAG, post.toString());
+                Log.v(TAG, "Upload success");
+
+
             }
 
             @Override
             public void onFailure(Call<ResponseBody> call, Throwable t) {
-                Log.e("Upload error:", t.getMessage());
+                Log.e(TAG, "Upload error:"+ t.getMessage());
             }
         });
     }
