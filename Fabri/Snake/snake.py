@@ -68,9 +68,13 @@ image2[image2.shape[0]//3+16:image2.shape[0]//3+30,111:173,0:3]=neuron_nr
 W=240
 image2[40:40+legend.shape[0],40:40+legend.shape[1],0:3]=cv2.cvtColor(legend, cv2.COLOR_BGR2RGB)
 # GRAPH2
+cv2.circle(image2,(Z, center-1), length, (240,240,240), -1)
 cv2.line(image2, (Z, center), (Z, center-length), (0,0,255), 2)
-cv2.line(image2, (Z, center), (Z+length, center+length//2), (255,0,0), 2)
-cv2.line(image2, (Z, center), (Z-length, center+length//2), (0,127,0), 2)
+cv2.line(image2, (Z, center), (Z, center+length), (220,220,220), 1)
+cv2.line(image2, (Z, center), (Z+int(0.866*length), center+int(0.866*length//2)), (255,0,0), 2)
+cv2.line(image2, (Z, center), (Z-int(0.866*length), center-int(0.866*length//2)), (220,220,220), 1)
+cv2.line(image2, (Z, center), (Z-int(0.866*length), center+int(0.866*length//2)), (0,127,0), 2)
+cv2.line(image2, (Z, center), (Z+int(0.866*length), center-int(0.866*length//2)), (220,220,220), 1)
 
 #    cv2.rectangle(image,(image.shape[1]-150,10),image.shape[1]-50,100,(0,255,0),3)
 
@@ -80,6 +84,8 @@ while(True):
     ret, image = cap.read()
     size=200
     A, B, C, D = int(image.shape[0]//2-size/2)-40, int(image.shape[0]//2+size/2)-40, int(image.shape[1]//2-size/2), int(image.shape[1]//2+size/2)
+    Z=image2.shape[1]//2
+    center=image2.shape[0]*2//3-40
     frame = []
     frame.append(adapt_input(cv2.cvtColor(image, cv2.COLOR_BGR2RGB), 64))
 #    frame.append(input2)
@@ -97,7 +103,8 @@ while(True):
 # INPUT
     image[image.shape[0]-120:image.shape[0]-40, 40:120]=input_image                
 #    image[50:130, image.shape[1]-130:image.shape[1]-50]=input2b                
-        
+    Z1=Z
+    center1=center
 # PENULTIMATE LAYER
     for i in range(128):
         for j in range (nc):
@@ -108,16 +115,28 @@ while(True):
         image[F:G,H:H+2,(color-1)%3].fill(255)
 
 # GRAPH        
-        if f_v[i]>0.2 and nc>2:
-            y = int(center-w[0][i]*length+length//2*w[1][i]+length//2*w[2][i])
-            x = int(Z+10*(8.66*w[1][i]-8.66*w[2][i]))
-            if color==0:
-                cv2.circle(image,(x, y), 3, (0,0,255), -1)
-            elif color==1:
-                cv2.circle(image,(x, y), 3, (255,0,0), -1)
-            else:
-                cv2.circle(image,(x, y), 3, (0,127,0), -1)
-
+##        if f_v[i]>0.2 and nc>2:
+##            y = int(center-w[0][i]*length+length//2*w[1][i]+length//2*w[2][i])
+##            x = int(Z+10*(8.66*w[1][i]-8.66*w[2][i]))
+##            if color==0:
+##                cv2.circle(image,(x, y), 3, (0,0,255), -1)
+##            elif color==1:
+##                cv2.circle(image,(x, y), 3, (255,0,0), -1)
+##            else:
+##                cv2.circle(image,(x, y), 3, (0,127,0), -1)
+        
+        y = int(-w[0][i]*length+length//2*w[1][i]+length//2*w[2][i])
+        x = int(10*(8.66*w[1][i]-8.66*w[2][i]))
+        cv2.line(image, (Z, center), ((Z+int(x*f_v[i]/12)), center+int(y*f_v[i]/12)), (200,200,200), 2)
+        Z=Z+int(x*f_v[i]/12)
+        center=center+int(y*f_v[i]/12)
+##        if color==0:
+##                cv2.circle(image,(x, y), 3, (0,0,255), -1)
+##            elif color==1:
+##                cv2.circle(image,(x, y), 3, (255,0,0), -1)
+##            else:
+##                cv2.circle(image,(x, y), 3, (0,127,0), -1)
+    
 # OUTPUT
     image[image.shape[0]-130:image.shape[0]-50, image.shape[1]-130:image.shape[1]-50]=output[b]
     
