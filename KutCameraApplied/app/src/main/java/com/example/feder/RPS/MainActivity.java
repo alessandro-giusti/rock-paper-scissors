@@ -9,22 +9,24 @@ import java.io.IOException;
 import java.util.Calendar;
 
 
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Matrix;
+import android.graphics.Paint;
+import android.graphics.Rect;
 import android.hardware.Camera;
 import android.hardware.Camera.CameraInfo;
 import android.hardware.Camera.ErrorCallback;
 import android.hardware.Camera.PictureCallback;
 import android.hardware.Camera.ShutterCallback;
-import android.media.ExifInterface;
 import android.os.Build;
 import android.os.Bundle;
 import android.app.Activity;
 import android.provider.Settings;
-import android.support.v4.app.FragmentActivity;
-import android.support.v7.app.AppCompatActivity;
-import android.text.Layout;
 import android.util.Log;
 import android.view.Surface;
 import android.view.SurfaceView;
@@ -32,50 +34,231 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.RelativeLayout;
 import android.widget.Spinner;
-import android.widget.SpinnerAdapter;
 import android.widget.TextView;
 
+
+
+
+
 public class MainActivity extends Activity {
+
     private final static String TAG = "RPS";
+    private final static int imgSize = 500;
     ImageView imageSmallPreview;
+
     ImageView labelGiver;
     Bitmap image;
-	String label;
+    Bitmap imagePreview;
+    String label;
     SurfaceView previewSurface;
-	Activity context;
-	Preview preview;
-	Camera camera;
+    Activity context;
+    Preview preview;
+    Camera camera;
     ImageView fotoButton;
+    ImageView bigPreview;
+    ImageView connectionStatus;
     Spinner sp;
     ArrayAdapter<String> spAdp;
-    ImageView[] tests;
-	LinearLayout progressLayout;
-    ImageView leftButton;
-    ImageView rightButton;
+    ImageView givenLabel;
+    LinearLayout progressLayout;
+    String path = "/sdcard/KutCamera/cache/images/";
+    Boolean isTraining;
     ImageView deleteButton;
-	String path = "/sdcard/KutCamera/cache/images/";
+    View[] disabledDuringLoading;
 
-	
+
+    class testUpdates extends Command
+    {
+        public void execute( int pp, int pr, int ps)
+        {
+
+            image = overlay(image, generateGraph(pr,pp,ps));
+            bigPreview.setImageBitmap(image);
+            new Connected().execute();
+
+        }
+
+
+    }
+
+
+    class trainUpdates extends Command
+    {
+        final private String labelAtClick;
+
+        trainUpdates(String label){
+            labelAtClick=label;
+        }
+        @Override
+        public void execute(){
+
+            imageSmallPreview.setImageBitmap(imagePreview);
+
+            if (labelAtClick.equals("Paper")) {
+                givenLabel.setImageResource(R.drawable.rps_p);
+            } else if (labelAtClick.equals("Rock")) {
+                givenLabel.setImageResource(R.drawable.rps_r);
+            } else if (labelAtClick.equals("Scissors")) {
+                givenLabel.setImageResource(R.drawable.rps_s);
+            }
+            deleteButton.setVisibility(View.VISIBLE);
+
+            new Connected().execute();
+
+        }
+
+
+    }
+
+
+
+
+
+
+    class NotConnected extends Command
+    {
+
+
+
+        public void execute()
+        {
+
+
+            AlertDialog mydialog = generateDialog("Errore di connessione","Assicurati di essere connesso ad internet");
+            mydialog.show();
+            connectionStatus.setImageResource(R.drawable.no_conn);
+            enableThings();
+
+
+        }
+    }
+
+    class Connected extends Command
+    {
+
+
+
+        public void execute()
+        {
+
+
+            connectionStatus.setImageResource(R.drawable.yes_conn);
+            enableThings();
+
+        }
+    }
+
+
+
+    public void enableThings()
+    {
+
+
+        for (View x : disabledDuringLoading) x.setClickable(true);
+        camera.startPreview();
+        progressLayout.setVisibility(View.GONE);
+
+    }
+    public AlertDialog generateDialog(String text, String title){
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setMessage(text).setTitle(title);
+        builder.setPositiveButton("Ok", new AlertDialog.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+
+            }
+        });
+
+        AlertDialog dialog = builder.create();
+        return dialog;
+    }
+
+    public void checkConnection(){
+	    HttpClient.testConnection(new Connected(), new NotConnected());
+
+    }
+
+    private Bitmap overlay(Bitmap bmp1, Bitmap bmp2) {
+        Bitmap bmOverlay = Bitmap.createBitmap(bmp1.getWidth(), bmp1.getHeight(), bmp1.getConfig());
+        Canvas canvas = new Canvas(bmOverlay);
+        canvas.drawBitmap(bmp1, new Matrix(), null);
+        canvas.drawBitmap(bmp2, 0,0, null);
+        return bmOverlay;
+    }
+    private Bitmap generateGraph(int pr,int pp,int ps) {
+
+        Rect background = new Rect(0, 0, imgSize, imgSize);
+
+        Bitmap image = Bitmap.createBitmap(background.width(), background.height(), Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(image);
+
+        Paint paint = new Paint();
+        paint.setColor(Color.TRANSPARENT);
+
+        Paint banana = new Paint();
+        banana.setColor(Color.YELLOW);
+
+        Paint pomodoro = new Paint();
+        pomodoro.setColor(Color.RED);
+
+        int rectWidth=imgSize/20;
+        int rectWidth2=imgSize/25;
+
+        int paperHeight = pp * (imgSize/100);
+        int rockHeight = pr * (imgSize/100);
+        int scissorHeight = ps * (imgSize/100);
+
+        Rect rock = new Rect(imgSize*2/6 - rectWidth, (imgSize-rockHeight/2) - imgSize/10, imgSize*2/6 + rectWidth, imgSize-imgSize/10 );
+        Rect paper = new Rect(imgSize*3/6 - rectWidth, (imgSize-paperHeight/2) - imgSize/10, imgSize*3/6 + rectWidth, imgSize- imgSize/10);
+        Rect scissor = new Rect(imgSize*4/6 - rectWidth, (imgSize-scissorHeight/2) - imgSize/10, imgSize*4/6 + rectWidth, imgSize- imgSize/10);
+
+        Rect rock2 = new Rect(imgSize*2/6 - rectWidth2, (imgSize-rockHeight/2)- imgSize/10 + rockHeight/50, imgSize*2/6 + rectWidth2, imgSize- imgSize/10 - rockHeight/50);
+        Rect paper2 = new Rect(imgSize*3/6 - rectWidth2, (imgSize-paperHeight/2)- imgSize/10 + paperHeight/50, imgSize*3/6 + rectWidth2, imgSize- imgSize/10 - paperHeight/50);
+        Rect scissor2 = new Rect(imgSize*4/6 - rectWidth2, (imgSize-scissorHeight/2)- imgSize/10 + scissorHeight/50, imgSize*4/6 + rectWidth2, imgSize- imgSize/10 -scissorHeight/50 );
+
+
+        canvas.drawRect(background, paint);
+        canvas.drawRect(rock, banana);
+        canvas.drawRect(paper, banana);
+        canvas.drawRect(scissor, banana);
+        canvas.drawRect(rock2, pomodoro);
+        canvas.drawRect(paper2, pomodoro);
+        canvas.drawRect(scissor2, pomodoro);
+
+        Bitmap bitR = BitmapFactory.decodeResource(getResources(), R.drawable.rps_r);
+        Bitmap bitP = BitmapFactory.decodeResource(getResources(), R.drawable.rps_p);
+        Bitmap bitS = BitmapFactory.decodeResource(getResources(), R.drawable.rps_s);
+        canvas.drawBitmap(bitR,imgSize*2/6 - rectWidth,imgSize-imgSize/10 ,null );
+        canvas.drawBitmap(bitP,imgSize*3/6 - rectWidth,imgSize-imgSize/10 ,null );
+        canvas.drawBitmap(bitS,imgSize*4/6 - rectWidth,imgSize-imgSize/10 ,null );
+
+        return image;
+    }
+
+
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
-		
+
+		isTraining = true;
 		context=this;
         image = null;
         label = "Rock";
-
+        connectionStatus = (ImageView)findViewById(R.id.connection_status);
+        bigPreview = (ImageView)findViewById(R.id.image_big_preview);
+        givenLabel = (ImageView) findViewById(R.id.image_small_result);
 		fotoButton = (ImageView) findViewById(R.id.take_pic);
         sp = (Spinner) findViewById(R.id.spinner);
         spAdp = new ArrayAdapter<String>(this, R.layout.row);
         labelGiver =  (ImageView) findViewById(R.id.label_view);
         imageSmallPreview = (ImageView) findViewById(R.id.image_small_preview);
+        deleteButton = (ImageView) findViewById(R.id.deletebutton);
 		progressLayout = (LinearLayout) findViewById(R.id.progress_layout);
         previewSurface=(SurfaceView) findViewById(R.id.KutCameraFragment);
 		preview = new Preview(this,previewSurface);
@@ -83,18 +266,32 @@ public class MainActivity extends Activity {
 		frame.addView(preview);
 		preview.setKeepScreenOn(true);
 
-        spAdp.addAll(new String[]{"Training, Testing"});
+        spAdp.addAll(new String[]{"Training", "Testing"});
         sp.setAdapter(spAdp);
+        deleteButton.setVisibility(View.INVISIBLE);
+        disabledDuringLoading=new View[]{deleteButton,sp,fotoButton,labelGiver};
 
         sp.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener()
         {
 
-            @Override
+
             public void onItemSelected(AdapterView<?> arg0, View arg1, int arg2, long arg3) {
                 TextView txt=(TextView) arg1.findViewById(R.id.rowtext);
                 String s=txt.getText().toString();
-                if (s.equals("Training")){}
-                else{}//TODO
+                bigPreview.setImageDrawable(null);
+                if (s.equals("Training")){
+                    isTraining=true;
+                    labelGiver.performClick();
+					givenLabel.setVisibility(View.VISIBLE);
+					givenLabel.setImageResource(R.drawable.fotocekicon);
+                }
+                else{
+                    isTraining=false;
+                    labelGiver.setImageResource(R.drawable.fotocekicon);
+                    imageSmallPreview.setImageResource(R.drawable.fotocekicon);
+                    givenLabel.setVisibility(View.INVISIBLE);
+
+                }
 
 
             }
@@ -104,17 +301,7 @@ public class MainActivity extends Activity {
             { }
         });
 
-        tests=new ImageView[]{
-                (ImageView) findViewById(R.id.image_test1),
-                (ImageView) findViewById(R.id.image_test2),
-                (ImageView) findViewById(R.id.image_test3),
-                (ImageView) findViewById(R.id.image_test4),
-                (ImageView) findViewById(R.id.image_test5),
-                (ImageView) findViewById(R.id.image_test6),
-                (ImageView) findViewById(R.id.image_test7),
-                (ImageView) findViewById(R.id.image_test8),
-                (ImageView) findViewById(R.id.image_test9)
-        };
+
 
 
 
@@ -131,24 +318,34 @@ public class MainActivity extends Activity {
 
 				fotoButton.setClickable(false);
 				progressLayout.setVisibility(View.VISIBLE);
+                bigPreview.setImageDrawable(null);
+                for (View x : disabledDuringLoading) x.setClickable(false);
 			}
 		});
 
-		imageSmallPreview.setOnClickListener(new OnClickListener() {
 
-			@Override
-			public void onClick(View v) {
+        bigPreview.setOnClickListener(new OnClickListener() {
 
-
-			}
-		});
-
-        imageSmallPreview.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
-            public boolean onLongClick(View view) {
-                return false;
+            public void onClick(View v) {
+
+
+                bigPreview.setImageDrawable(null);
             }
         });
+
+        deleteButton.setOnClickListener(new OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+
+                HttpClient.deletePhoto();
+                imageSmallPreview.setImageResource(R.drawable.fotocekicon);
+                givenLabel.setImageResource(R.drawable.fotocekicon);
+                deleteButton.setVisibility(View.INVISIBLE);
+            }
+        });
+
 
 
 
@@ -157,22 +354,29 @@ public class MainActivity extends Activity {
             @Override
             public void onClick(View v) {
 
-                if (labelGiver.getTag().toString().equals("R")) {
-                    labelGiver.setImageResource(R.drawable.rps_p);
-                    labelGiver.setTag("P");
-					label = "Paper";
-                } else if (labelGiver.getTag().toString().equals("P")){
-                    labelGiver.setImageResource(R.drawable.rps_s);
-                    labelGiver.setTag("S");
-					label = "Scissors";
-                }  else if (labelGiver.getTag().toString().equals("S")){
-                    labelGiver.setImageResource(R.drawable.rps_r);
-                    labelGiver.setTag("R");
-					label = "Rock";
+                if (isTraining){
+
+
+                    if (labelGiver.getTag().toString().equals("R")) {
+                        labelGiver.setImageResource(R.drawable.rps_p);
+                        labelGiver.setTag("P");
+                        label = "Paper";
+                    } else if (labelGiver.getTag().toString().equals("P")){
+                        labelGiver.setImageResource(R.drawable.rps_s);
+                        labelGiver.setTag("S");
+                        label = "Scissors";
+                    }  else if (labelGiver.getTag().toString().equals("S")){
+                        labelGiver.setImageResource(R.drawable.rps_r);
+                        labelGiver.setTag("R");
+                        label = "Rock";
+                    }
+                }
+                else{
                 }
             }
         });
 
+        checkConnection();
 
 	}
 
@@ -181,7 +385,8 @@ public class MainActivity extends Activity {
 	@Override
 	protected void onResume() {
 		super.onResume();
-		// TODO Auto-generated method stub
+        checkConnection();
+
 		if(camera==null){
 		camera = Camera.open();
 		camera.startPreview();
@@ -277,13 +482,16 @@ public class MainActivity extends Activity {
 			Calendar c = Calendar.getInstance();
 			File fotoDir = new File(path);
 
+            //File fotoriginal = new File(path + "original_" + label + "_" + c.getTime().getDate() + c.getTime().getHours() + c.getTime().getMinutes() + c.getTime().getSeconds() + ".jpg");
             File foto = new File(path + label + "_" + c.getTime().getDate() + c.getTime().getHours() + c.getTime().getMinutes() + c.getTime().getSeconds() + ".jpg");
-			ByteArrayOutputStream stream = new ByteArrayOutputStream();
+
+            ByteArrayOutputStream stream = new ByteArrayOutputStream();
 
 
             if (!foto.exists()) {
                 try {
                     foto.createNewFile();
+                    //fotoriginal.createNewFile();
                 } catch (IOException e) {
                     Log.e(TAG, "Error creating file: " + e.getMessage() );
 
@@ -295,9 +503,35 @@ public class MainActivity extends Activity {
                 fotoDir.mkdirs();
 			}
 
-			try(FileOutputStream outStream= new FileOutputStream(foto)) {
-				//write bitmap
+           /* try(FileOutputStream outStream= new FileOutputStream(fotoriginal)) {
+                //write bitmap
                 image = BitmapFactory.decodeByteArray(data, 0, data.length);
+
+
+
+                image.compress(Bitmap.CompressFormat.JPEG, 100, stream);
+                byte[] byteArray = stream.toByteArray();
+                // Write to SD Card
+                outStream.write(byteArray);
+                outStream.close();
+
+
+
+
+
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            } finally {
+
+            }*/
+            try(FileOutputStream outStream= new FileOutputStream(foto)) {
+                //write bitmap
+
+
+                image = BitmapFactory.decodeByteArray(data, 0, data.length);
+
 
 
                 // to crop bmp to a square (image, Xstart, Ystart, width, height)
@@ -306,8 +540,12 @@ public class MainActivity extends Activity {
 
 
                 //resize
-                image= Bitmap.createScaledBitmap(image, 500, 500, true);
+                image= Bitmap.createScaledBitmap(image, imgSize, imgSize, true);
 
+
+                Matrix matrix = new Matrix();
+                matrix.postRotate(90);
+                image = Bitmap.createBitmap(image , 0, 0, image.getWidth(), image.getHeight(), matrix, true);
 
                 // Convert image to JPEG
 
@@ -315,24 +553,25 @@ public class MainActivity extends Activity {
                 byte[] byteArray = stream.toByteArray();
                 image = BitmapFactory.decodeByteArray(byteArray, 0, byteArray.length);
 
+
                 // Write to SD Card
-				outStream.write(byteArray);
-				outStream.close();
+                outStream.write(byteArray);
+                outStream.close();
 
 
 
 
 
-			} catch (FileNotFoundException e) {
-				e.printStackTrace();
-			} catch (IOException e) {
-				e.printStackTrace();
-			} finally {
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            } finally {
 
-			}
-			
-			
-			Bitmap imagePreview;
+            }
+
+
+
 			 final BitmapFactory.Options options = new BitmapFactory.Options();
 			  options.inSampleSize = 5;
 			   
@@ -346,34 +585,33 @@ public class MainActivity extends Activity {
 
 
 
-			imageSmallPreview.setImageBitmap(imagePreview);
+
+
+
+
             String devId=Settings.Secure.getString(getApplicationContext().getContentResolver(), Settings.Secure.ANDROID_ID);
 
+
+
             try {
-                HttpClient.uploadImage(foto,label, devId);
+                if (isTraining) {
+						HttpClient.uploadImage(foto, label, devId, new trainUpdates(label), new NotConnected());
+
+				}
+                else {
+
+                    	HttpClient.testImage(foto, devId, new testUpdates(), new NotConnected());
+
+                }
             } catch (Exception e) {
                 Log.e(TAG, "Error uploading: " + e.getMessage() );
 
             }
 
 
-            if ( label.equals("Paper")) {
-                for (ImageView test : tests){
-                    test.setImageResource(R.drawable.rps_p);
-                }
-            } else if ( label.equals("Rock")) {
-                for (ImageView test : tests){
-                    test.setImageResource(R.drawable.rps_r);
-                }
-            }  else if ( label.equals("Scissors")) {
-                for (ImageView test : tests){
-                    test.setImageResource(R.drawable.rps_s);
-                }
-            }
 
-			fotoButton.setClickable(true);
-			camera.startPreview();
-			progressLayout.setVisibility(View.GONE);
+
+
 
 
 		}
