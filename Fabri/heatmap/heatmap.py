@@ -7,22 +7,149 @@ import matplotlib.pyplot as plt
 from skimage import img_as_ubyte
 import keras
 from keras import backend as K
+from keras import layers
 import scipy.misc
 
 # USER OPTIONS
-model_name="rps.model"
-class1="IMAGES/rock.jpg"
-class2="IMAGES/paper.jpg"
-class3="IMAGES/scissors.jpg"
+model_name="model_600.model"
+visualization=1
 
 # VARIABLES
 model = keras.models.load_model(model_name)
 nc=model.output_shape[1]
-layer_names=("dense_5", "conv2d_9", "conv2d_10", "conv2d_11", "conv2d_12")
-margin=5
+layer_name=model.layers[12].name
+step=0.1
+margin=4
+w = [[0]*128 for i in range(nc)]
+for i in range(128):
+    for j in range (nc):
+        w[j][i]=model.layers[15].get_weights()[0][i][j]
 print("hello")
 print(model.summary())
 
+# REMAP
+def remap(m):
+    return (m*255).astype("uint8")
+#    return np.clip(((m-np.mean(m))/np.std(m)+0.5)*255,0,255).astype("uint8")
+
+def adapt_input(im, size):
+    h, w = im.shape[0:2]
+    sz = min(h, w)
+    im=im[(h//2-sz//2):(h//2+sz//2),(w//2-sz//2):(w//2+sz//2),:] 
+    im = skimage.transform.resize(im, (size, size, 3), mode='reflect')
+    return im
+
+def create_input(neuron_nr, vtype):
+    input1=np.zeros((1, 64, 64, 3))+0.5
+    if vtype==0:
+        objective=model.get_layer(layer_name).output[0,neuron_nr]
+    elif vtype==1:
+        objective = model.output[0,neuron_nr]
+    c=K.gradients(objective, model.input)[0]
+    c /= (K.sqrt(K.mean(K.square(c))) + 1e-5)
+    if vtype==0:
+        get=K.function([model.input],[objective, c])
+    elif vtype==1:
+        get=K.function([model.input, K.learning_phase()],[objective, c])
+    for i in range(100):
+        if vtype==0:
+            loss_value, grads_value=get([input1])
+        elif vtype==1:
+            loss_value, grads_value=get([input1, 1])
+        input1 += grads_value*step
+
+        input1=np.clip(input1, 0, 1)
+        print(i)
+    img=remap(input1[0])
+    return img
+
+# PLOT
+def visualization1():
+    for i in range(3):
+        print(i)
+        map_image=create_input(i, 0)
+        scipy.misc.imsave('IMAGES/fish%d.jpg' %(i+1), map_image)
+
+def visualization2():
+    for i in range(nc):
+        print(i)
+        map_image=create_input(i, 1)
+        scipy.misc.imsave('IMAGES/fish%d.jpg' %(i+1), map_image)
+
+
+def visualization3():
+#    input1=np.zeros((1, 64, 64, 3))+127
+    input1=skimage.io.imread("IMAGES/paper3.jpg")
+    input1=input1[np.newaxis,:,:,:]
+    input1=input1.astype("float32")
+
+    heatmap=np.zeros((64, 64))
+    a = model.predict([input1])
+    b = np.argmax(a[0])
+    print(b)
+    african_elephant_output= model.output[:,b]
+    lcl=model.get_layer("conv2d_12")
+    grads=K.gradients(african_elephant_output, lcl.output)[0]
+    pool_g=K.mean(grads, axis=(0, 1, 2))
+    get=K.function([model.input, K.learning_phase()], [pool_g, lcl.output[0]])
+    pool_g_value, clo_value=get([input1, 1])
+    for i in range(3):
+        clo_value[:,:,i] *=pool_g_value[i]
+    heatmap= np.mean(clo_value, axis=-1)
+    heatmap=np.maximum(heatmap, 0)
+    
+    img=cv2.imread("IMAGES/paper3.jpg")
+    print(img.shape)
+    heatmap=np.uint8(255*heatmap)
+    print(heatmap.shape)
+    heatmap=np.resize(heatmap, (img.shape[1], img.shape[0]))
+    heatmap=cv2.applyColorMap(heatmap, cv2.COLORMAP_JET)
+    superimposed_img=heatmap*0.4+img
+    cv2.imwrite("ciao.jpg", superimposed_img)
+
+if visualization==1:
+    visualization1()
+elif visualization==2:
+    visualization2()
+elif visualization==3:
+    visualization3()
+
+
+#    plt.matshow(heatmap)
+#    plt.show()
+#    image=np.zeros((nr_images*64+(nr_images-1)*margin,640, 3)).astype("uint8")
+#    image[:,:,:].fill(255)
+#    get2 = K.function([model.layers[0].input], [model.layers[13].output])
+#        for j in range(128):
+#            color=np.argmax(np.asarray(w)[:,j])
+#            F, G, H=64*i+margin*i+64-min(int(f_v[j]*10), 64), 64*i+margin*i+64, 100+j*2
+#            image[F:G,H:H+2,0:3].fill(0)
+#            print(color)
+#            image[F:G,H:H+2, color].fill(255)
+
+#    plt.imshow(image)
+#    plt.show()
+#    results[0:64,0:64,:]=map_image
+#    w = [[0]*128 for i in range(3)]
+#    results=np.zeros((64,m*64+(m-1)*margin, 3))
+#    for n in range(1):
+#        for j in range (2):
+#            w[j][n]=model.layers[15].get_weights()[0][neuron_nr-1][j]
+#            color=np.argmax(np.asarray(w)[:,neuron_nr-1])
+#    if color==0:
+#        scipy.misc.imsave('IMAGES/NEURONS/rock/neuron_nr%d_.jpg' %(neuron_nr), img)
+#    elif color==1:
+#        scipy.misc.imsave('IMAGES/NEURONS/paper/neuron_nr%d_.jpg' %(neuron_nr), img)
+#    elif color==2:
+#        scipy.misc.imsave('IMAGES/NEURONS/scissors/neuron_nr%d_.jpg' %(neuron_nr), img)
+#    return img
+
+#ROCK:0, 1, 2
+#PAPER: 3, 6, 7, 39, 40
+#SCISSORS: 9, 11
+#input1=skimage.io.imread("dory.jpg")
+#input1=input1[np.newaxis,:,:,:]
+#input1=input1.astype("float32")
 
 # FLOAT - DA ZERO A UNO: DA NERO A BIANCO
 # UINT8 - DA ZERO A 255
@@ -40,58 +167,7 @@ print(model.summary())
 ##plt.imshow(ciccio)
 ##plt.show()
 
-# REMAP
-def remap(m):
-    return m/255
-#    return np.clip(((m-np.mean(m))/np.std(m)*0.1+0.5)*255,0,255).astype("uint8")
 
-#ROCK:0, 1, 2
-#PAPER: 3, 6, 7, 39, 40
-#SCISSORS: 9, 11
-
-neuron_nr=40
-m=1
-
-def perfect_input(neuron_nr, color):
-    input1=np.zeros((1, 64, 64, 3))
-
-    objective=K.mean(model.get_layer("dense_5").output[0,neuron_nr])
-#    objective = model.output[0, 0]
-    change=K.gradients(objective, model.input)[0]
-    change /= (K.sqrt(K.mean(K.square(change))) + 1e-5)
-    get=K.function([model.input],[objective, change])
-
-    step=1
-    for i in range(10000):
-        loss_value, grads_value=get([input1])
-        input1 += grads_value*step
-        input1=np.clip(input1, 0, 255)
-        print(i)
-    img=remap(input1[0])
-    pippo=neuron_nr+1
-    if color==0:
-        scipy.misc.imsave('IMAGES/NEURONS/0/neuron_nr%d_.jpg' %(pippo), img)
-    elif color==1:
-        scipy.misc.imsave('IMAGES/NEURONS/1/neuron_nr%d_.jpg' %(pippo), img)
-    elif color==2:
-        scipy.misc.imsave('IMAGES/NEURONS/2/neuron_nr%d_.jpg' %(pippo), img)
-    return img
-
-
-# PLOT
-def visualization1():
-    w = [[0]*128 for i in range(3)]
-    results=np.zeros((64,m*64+(m-1)*margin, 3))
-    for n in range(1):
-        for j in range (3):
-            w[j][n]=model.layers[15].get_weights()[0][15][j]
-            color=np.argmax(np.asarray(w)[:,15])
-        map_image=perfect_input(15, color)
-#        results[0:64,n*64+n*margin:n*64+64+n*margin,:]=map_image
-#    plt.imshow(results)
-#    plt.show()
-
-visualization1()
 
 #    return deprocess_image(img)
 ##def deprocess_image(x):
