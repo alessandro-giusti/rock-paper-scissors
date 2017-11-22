@@ -376,7 +376,7 @@ public class MainActivity extends Activity {
             }
         });
 
-        checkConnection();
+       
 
 	}
 

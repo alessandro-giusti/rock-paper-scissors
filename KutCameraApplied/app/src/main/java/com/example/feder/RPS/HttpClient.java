@@ -49,7 +49,7 @@ class lastImage{
 class ServiceGenerator {
 
     //private static final String BASE_URL = "http://[2001:0:9d38:6abd:15:1230:f5f4:efe9]:8080";
-    private static final String BASE_URL = "http://10.11.16.47:8000";
+    private static final String BASE_URL = "http://rps.idsia.ch";
     //private static final String BASE_URL = "http://192.168.1.107:8000";
 
     private static Retrofit.Builder builder =
@@ -137,6 +137,7 @@ public class HttpClient {
 
                 } catch (IOException|NullPointerException e) {
                     Log.e(TAG, "Failure");
+                    ifFailure.execute();
                 }
 
                 //JsonObject post = new JsonObject().get(body.toString()).getAsJsonObject();
@@ -216,11 +217,18 @@ public class HttpClient {
         call1.enqueue(new Callback<ResponseBody>() {
             @Override
             public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
-                ResponseBody body =response.body();
+                try{
+                    ResponseBody body =response.body();
+                    String s = body.string();
+                    Log.v(TAG, "Test success: " + s);
+                    ifSuccess.execute();
+                } catch (IOException|NullPointerException e) {
+                    Log.e(TAG, "Failure converting body to string");
+                    ifFailure.execute();
+                }
 
-                ifSuccess.execute();
 
-            }
+        }
 
             @Override
             public void onFailure(Call<ResponseBody> call, Throwable t) {

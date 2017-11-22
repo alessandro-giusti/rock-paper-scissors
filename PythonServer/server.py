@@ -112,7 +112,7 @@ def photo(body,request):
     else:
         a_input=full_path
         to_test=[]
-        to_test.append(skimage.img_as_ubyte(adapt_input(skimage.io.imread(a_input), 64)))
+        to_test.append((adapt_input(skimage.io.imread(a_input), 64)))
         return model.predict(np.asarray(to_test)).tolist()
     
     #return filename
