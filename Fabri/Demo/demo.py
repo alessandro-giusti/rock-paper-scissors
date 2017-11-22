@@ -5,6 +5,7 @@ import skimage.viewer
 from skimage import img_as_ubyte
 import keras
 from keras import backend as K
+import matplotlib.pyplot as plt
 
 # USER OPTIONS
 model_name="rps.model"
@@ -16,19 +17,22 @@ legend=skimage.io.imread("IMAGES/rps_legend.bmp")
 # VARIABLES
 model = keras.models.load_model(model_name)
 nc=model.output_shape[1]
+neuron_i=0
 video=True
 title=skimage.io.imread("IMAGES/title.png")
 x_axis=skimage.io.imread("IMAGES/x_axis.bmp")
 neuron_nr=skimage.io.imread("IMAGES/neuron_nr.bmp")
-special_input, special_input2, special_input3=[],[],[]
-special_input.append("IMAGES/neuron_nr1_.jpg")
-special_input.append("IMAGES/neuron_nr2_.jpg")
-special_input.append("IMAGES/neuron_nr3_.jpg")
+special_input, special_input2, special_input3, special_input4=[],[],[],[]
+special_input.append("IMAGES/japan2.jpg")
+special_input.append("IMAGES/striato2.jpg")
+special_input.append("IMAGES/test2.jpg")
 output=[]*3
 output.append(skimage.io.imread(class1))
 output.append(skimage.io.imread(class2))
 output.append(skimage.io.imread(class3))
 conc=0
+paperino=0
+l_verme=100
 b2, F, G, H=0, 0, 0, 0
 def adapt_input(im, size):
     h, w = im.shape[0:2]
@@ -38,10 +42,18 @@ def adapt_input(im, size):
     return im
 
 for i in range(len(special_input)):
-    special_input2.append(skimage.img_as_ubyte(adapt_input(skimage.io.imread(special_input[i]), 64)))
+    special_input2.append(adapt_input(skimage.io.imread(special_input[i]), 64))
     special_input3.append(skimage.img_as_ubyte(adapt_input(skimage.io.imread(special_input[i])[:,:,::-1], 80)))
-inputtino, inputtinob=special_input2[0], special_input3[0]
-
+    special_input4.append(skimage.img_as_ubyte(adapt_input(skimage.io.imread(special_input[i])[:,:,::-1], 120)))
+inputtino, inputtinob, inputtinod=special_input2[0], special_input3[0], special_input4[0]
+neuron, neuronb=[],[]
+for i in range(128):
+    neuron.append(adapt_input(skimage.io.imread("IMAGES/NEURONS/neuron%d.jpg" %(i+1)), 64))
+    neuronb.append(skimage.img_as_ubyte(adapt_input(skimage.io.imread("IMAGES/NEURONS/neuron%d.jpg"%(i+1))[:,:,::-1], 80)))
+for i in range(3):
+    neuron.append(adapt_input(skimage.io.imread("IMAGES/NEURONS/output%d.jpg" %(i+1)), 64))
+    neuronb.append(skimage.img_as_ubyte(adapt_input(skimage.io.imread("IMAGES/NEURONS/output%d.jpg"%(i+1))[:,:,::-1], 80)))
+    
 get = K.function([model.layers[0].input], [model.layers[13].output])
 get2=[]*11
 for i in range(11):
@@ -77,6 +89,31 @@ def spegni_mappe4():
     l4=4
     m4=[5]
     spegni_mappa(l4, m4)
+
+def generate_heatmap(input1):
+    input1=input1[np.newaxis,:,:,:]
+    a = model.predict([input1])
+    b = np.argmax(a[0])
+    print(b)
+    label= model.output[:,b]
+    lastconv=model.get_layer("conv2d_12")
+
+    grads=K.gradients(label, lastconv.output)[0]
+    pool_g=K.mean(grads, axis=(0, 1, 2))
+    get=K.function([model.input, K.learning_phase()], [pool_g, lastconv.output[0]])
+    pool_g_value, conv_value=get([input1, 1])
+    for i in range(5):
+        conv_value[:,:,i] *=pool_g_value[i]
+    heatmap= np.mean(conv_value, axis=-1)
+
+    heatmap=np.maximum(heatmap, 0)
+    heatmap/=np.max(heatmap)
+    heatmap=cv2.resize(heatmap, (input1.shape[1], input1.shape[0]))
+    heatmap=np.uint8(255*heatmap)
+    heatmap=cv2.applyColorMap(heatmap, cv2.COLORMAP_JET)
+    superimposed_image=np.uint8(input1*255)*0.5+heatmap
+    superimposed_image=adapt_input(superimposed_image[0], 120)
+    return superimposed_image 
 
 #remap_std=0.3
 def remap(m, max_pix, min_pix):
@@ -142,7 +179,6 @@ while(True):
         input_nn=adapt_input(image[:,:,::-1], 64)
     else:
         input_nn=inputtino
-
     a = model.predict([input_nn[np.newaxis,:,:,:]]).tolist()
     b = a[0].index(max(a[0]))
     f_v = get([input_nn[np.newaxis,:,:,:]])[0][0]
@@ -155,7 +191,8 @@ while(True):
         images[i]=remap(images[i],max_pix, min_pix)
     w = [[0]*128 for i in range(nc)]
     input_image=skimage.img_as_ubyte(adapt_input(image, 80))
-    input_image3=skimage.img_as_ubyte(adapt_input(image, 120))
+    if (paperino==0):
+        input_image3=skimage.img_as_ubyte(adapt_input(image, 120))
     input_image2=skimage.img_as_ubyte(adapt_input(image, 64))
     image[:, :, :]=image2[:,:,:]
                
@@ -164,7 +201,7 @@ while(True):
         if video==True:
             image[50:170, 50:170]=input_image3[:,::-1,:]                
         else:
-            image[50:130, 50:130]=inputtinob
+            image[50:170, 50:170]=inputtinod
     if conc==1:
         if video==True:
             image5[192:272, 10:90]=input_image[:,::-1,:]                
@@ -214,15 +251,15 @@ while(True):
         for j in range (nc):
             w[j][i]=model.layers[15].get_weights()[0][i][j]
         color=np.argmax(np.asarray(w)[:,i])
-        F, G, H=image.shape[0]-51-min(int(f_v[i]/20), 298), image.shape[0]-51, 40+i*2
+        F, G, H=image.shape[0]-51-min(int(f_v[i]*10), 298), image.shape[0]-51, 40+i*2
         image[F:G,H:H+2,0:3].fill(0)
         image[F:G,H:H+2,(color-1)%3].fill(255)
 
         y = -w[0][i]*length+length//2*w[1][i]+length//2*w[2][i]
         x = 10*(8.66*w[1][i]-8.66*w[2][i])
-        cv2.line(image, (int(Z1), int(center)), ((int(Z1+ x*f_v[i]/500)), int(center+ y*f_v[i]/500)), (20,20,20), 2)
-        Z1=Z1+int(x*f_v[i]/12)
-        center=center+y*f_v[i]/12
+        cv2.line(image, (int(Z1), int(center)), ((int(Z1+ x*f_v[i]/l_verme)), int(center+ y*f_v[i]/l_verme)), (20,20,20), 2)
+        Z1=Z1+int(x*f_v[i]/l_verme)
+        center=center+y*f_v[i]/l_verme
     
 # OUTPUT
     image[50:130, image.shape[1]-130:image.shape[1]-50]=output[b]
@@ -231,24 +268,35 @@ while(True):
 #    out.write(image)
 
     key = cv2.waitKey(20)
-    if key & 0xFF == ord('0'):
-        video=True
     if key & 0xFF == ord('1'):
+        video=True
+        paperino=0
+    if key & 0xFF == ord('c'):
         conc=1
     if key & 0xFF == ord('2'):
-        video, inputtino, inputtinob=False, special_input2[0], special_input3[0]
+        video, inputtino, inputtinob, inputtinod=False, special_input2[0], special_input3[0], special_input4[0]
     if key & 0xFF == ord('3'):
-        video, inputtino, inputtinob=False, special_input2[1], special_input3[1]
+        video, inputtino, inputtinob, inputtinod=False, special_input2[1], special_input3[1], special_input4[1]
     if key & 0xFF == ord('4'):
-        video, inputtino, inputtinob=False, special_input2[2], special_input3[2]
+        video, inputtino, inputtinob, inputtinod=False, special_input2[2], special_input3[2], special_input4[2]
     if key & 0xFF == ord('5'):
-        spegni_mappe1()        
+        video=False
+        inputtino, inputtinod=neuron[neuron_i], skimage.img_as_ubyte(adapt_input(neuronb[neuron_i], 120))
+        neuron_i=(neuron_i+1)%128
     if key & 0xFF == ord('6'):
-        spegni_mappe2()
+        inputtino, inputtinod=neuron[128], skimage.img_as_ubyte(adapt_input(neuronb[128], 120))
     if key & 0xFF == ord('7'):
-        spegni_mappe3()
+        inputtino, inputtinod=neuron[129], skimage.img_as_ubyte(adapt_input(neuronb[129], 120))
     if key & 0xFF == ord('8'):
-        spegni_mappe4()
+        inputtino, inputtinod=neuron[130], skimage.img_as_ubyte(adapt_input(neuronb[130], 120))
+    if key & 0xFF == ord('9'):
+        if video==False:
+            papero=generate_heatmap(inputtino)
+            inputtinod=papero
+        elif video==True:
+            papero=generate_heatmap(input_image2)      
+            input_image3=papero
+        paperino=1
     if conc==1:
         image=np.concatenate((image5,image), axis=1)
     if key & 0xFF == ord('q'):
