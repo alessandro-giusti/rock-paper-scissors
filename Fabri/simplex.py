@@ -4,18 +4,30 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import keras
-import scipy.misc
 from keras import backend as K
 from keras import layers
 from keras.models import Sequential
 from keras.layers import Conv2D, Flatten, Dense, Activation, MaxPooling2D
 
-
 # USER OPTIONS
-model_name="nemobest.model"
 step=1
+iterations=16
+X=np.zeros((1, 10, 10, 1))
+X.fill(-1)
+W2=np.array([[2, 2, 2],[0, 0, 0],[2, 2, 2]])
+maxpool=1
 
-# VARIABLES
+# ALTRE CONVOLUTIONI
+# PAPER
+#W2=np.array([[1, 2, -2],[2, 2, -1],[-1, -1, -3]])
+# ROCK
+#W2=np.array([[1, 2, 0],[-1, -2, 2],[-1, -1, 1]])
+# SCISSORS
+#W2=np.array([[5, 0, -3],[1, -1, 3],[0, 2, 4]])
+# HORIZONTAL STRIPES
+# W2=np.array([[2, 2, 2],[0, 0, 0],[2, 2, 2]])
+
+# NEURAL NETWORK
 model = Sequential()
 model.add(Conv2D(1, (3, 3), padding='valid', input_shape=(10,10,1)))
 model.add(MaxPooling2D(pool_size = (2, 2)))
@@ -23,10 +35,10 @@ model.add(Flatten())
 model.add(Dense(2)) 
 model.add(Activation('softmax'))
 model.compile(loss='categorical_crossentropy', optimizer="adadelta", metrics=['accuracy'])
-l_name=model.layers[0].name
-l_name2=model.layers[1].name
-#INPUT
-X=np.zeros((1, 10, 10, 1))
+if maxpool==0:
+    l_name=model.layers[0].name
+elif maxpool==1:
+    l_name=model.layers[1].name
 
 Y=np.array([[0, 1]])
 model.fit(x=X, y=Y, epochs=100, validation_data=None)
@@ -40,11 +52,9 @@ model.save('simplex.model')
 
 # WEIGHTS
 W = model.layers[0].get_weights()
-W2=np.array([[1, 1, 1],[-1, -1, -1],[1, 1, 1]])
 W[0]=W2[:,:,np.newaxis, np.newaxis]
 W[1][0]=0
 model.layers[0].set_weights(W)
-
 
 def create_input(X):
     objective=K.mean(model.get_layer(l_name).output[0])
@@ -53,7 +63,7 @@ def create_input(X):
     get=K.function([model.input],[objective, c])
 #    plt.imshow(X[0,:,:,0], vmin=0, vmax=1)
 #    plt.show()
-    for j in range(26):
+    for j in range(iterations):
 #        img2=remap(input1[0])
 #        scipy.misc.imsave('IMAGES/scissors_it%d.jpg' %(j+1), img2)
         loss_value, grads_value=get([X])
@@ -61,20 +71,19 @@ def create_input(X):
         print(np.mean(grads_value))
         X += grads_value*step
         X=np.clip(X, -1, 1)
+        print("X")
         print(X[0,:,:,0])
 #        plt.imshow(X[0,:,:,0], vmin=0, vmax=1)
 #        plt.show()
         print(j)
     return X
 
-# PLOT
-map_image=create_input(X)
-plt.imshow(map_image[0,:,:,0], vmin=-1, vmax=1)
+# PLOT AND SAVE
+
+image=create_input(X)
+plt.imshow(image[0,:,:,0], vmin=-1, vmax=1)
 plt.show()
-#create_input()
-#scipy.misc.imsave('IMAGES/simplex1.jpg', map_image[0])
-
-
+plt.imsave('simplex.jpg', image[0,:,:,0], vmin=-1, vmax=1)
 
 ##model = keras.models.load_model(model_name)
 ##nc=model.output_shape[1]
