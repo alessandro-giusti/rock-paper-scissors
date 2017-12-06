@@ -1,119 +1,167 @@
-# VISUALIZZAZIONE 2
+## FIND IDEAL INPUT
 import numpy as np
-import cv2
-import skimage
-import skimage.viewer
 import matplotlib.pyplot as plt
-from skimage import img_as_ubyte
 import keras
 from keras import backend as K
 from keras import layers
-import scipy.misc
 
 # USER OPTIONS
-model_name="model_600.model"
-visualization=1
+model_name="rps.model"
+step=10
+iterations=100
+trick1=1
+output_nr=2
 
 # VARIABLES
 model = keras.models.load_model(model_name)
+layer_name=model.layers[6].name
 nc=model.output_shape[1]
-layer_name=model.layers[12].name
-step=0.1
-margin=4
-w = [[0]*128 for i in range(nc)]
-for i in range(128):
-    for j in range (nc):
-        w[j][i]=model.layers[15].get_weights()[0][i][j]
-print("hello")
+final_output=np.zeros((64*2, 64*iterations//9, 3))
+W1=[]
+A=64
+conv_indices=[0,2,5,8,12,15]
+for i in (conv_indices):
+    W = model.layers[i].get_weights()
+    W1.append(np.copy(W[0]))
 print(model.summary())
 
-# REMAP
-def remap(m):
-    return (m*255).astype("uint8")
-#    return np.clip(((m-np.mean(m))/np.std(m)+0.5)*255,0,255).astype("uint8")
+def trick(i):
+    if i <=3:
+        W = model.layers[conv_indices[i]].get_weights()
+        W[0]=(abs(W[0])+W[0])/2
+        model.layers[conv_indices[i]].set_weights(W)
+    else:
+        pass
 
-def adapt_input(im, size):
-    h, w = im.shape[0:2]
-    sz = min(h, w)
-    im=im[(h//2-sz//2):(h//2+sz//2),(w//2-sz//2):(w//2+sz//2),:] 
-    im = skimage.transform.resize(im, (size, size, 3), mode='reflect')
-    return im
-
-def create_input(neuron_nr, vtype):
-    input1=np.zeros((1, 64, 64, 3))+0.5
-    if vtype==0:
-        objective=model.get_layer(layer_name).output[0,neuron_nr]
-    elif vtype==1:
-        objective = model.output[0,neuron_nr]
-    c=K.gradients(objective, model.input)[0]
-    c /= (K.sqrt(K.mean(K.square(c))) + 1e-5)
-    if vtype==0:
-        get=K.function([model.input],[objective, c])
-    elif vtype==1:
-        get=K.function([model.input, K.learning_phase()],[objective, c])
-    for i in range(100):
-        if vtype==0:
-            loss_value, grads_value=get([input1])
-        elif vtype==1:
-            loss_value, grads_value=get([input1, 1])
-        input1 += grads_value*step
-
-        input1=np.clip(input1, 0, 1)
-        print(i)
-    img=remap(input1[0])
-    return img
-
-# PLOT
-def visualization1():
-    for i in range(3):
-        print(i)
-        map_image=create_input(i, 0)
-        scipy.misc.imsave('IMAGES/fish%d.jpg' %(i+1), map_image)
+def untrick():
+    for i, index in enumerate(conv_indices):
+        W = model.layers[index].get_weights()
+        W[0]=W1[i]
+        model.layers[index].set_weights(W)
 
 def visualization2():
-    for i in range(nc):
-        print(i)
-        map_image=create_input(i, 1)
-        scipy.misc.imsave('IMAGES/fish%d.jpg' %(i+1), map_image)
+#    X=np.random.random((1, 64, 64, 3))*0.2+0.5
+    A=64
+    X=np.zeros((1, 64, 64, 3))
+    X.fill(0.5)
+#    objective = model.get_layer(layer_name).output[0,:,:,0]
+    objective = model.output[0,output_nr]
+    c=K.gradients(objective, model.input)[0]
+#    c /= (K.sqrt(K.mean(K.square(c))) + 1e-5)
+    get=K.function([model.input, K.learning_phase()],[objective, c])
+    for j in range(iterations):
+        if (trick1==1 and j<6):
+            trick(j)
+#            spegni_mappe1()
+        loss_value, grads_value=get([X, 1])
+        print(grads_value[0,30,:,1])
+        print(np.mean(grads_value))
+        if np.max(grads_value)>0:
+            step=0.6/np.max(grads_value)
+        if (j%10)==0:
+            final_output[0:64,A:(64+A),:]=(np.clip(grads_value[0]*step+0.5, 0, 1))
+            final_output[64:128,A:(64+A),:]=X[0]
+            A+=64
+#        grads_value[0,:,:,1].fill(0)
+#        grads_value[0,:,:,2].fill(0)
+        X += grads_value*step
+        X=np.clip(X, 0, 1)
+        untrick()
+        print(j)
+    print("grads_value", np.mean(grads_value))
+    print("np.min", np.min(X[0]))
+    print("np.max", np.max(X[0]))
+#    X[:,:,0].fill(0)
+#    final_output[:,:,1].fill(0) final_output[:,:,2].fill(0)
+    plt.imshow(final_output, vmin=0, vmax=1)
+    plt.show()
+    plt.imsave('image.jpg', X[0], vmin=0, vmax=1)
+
+### PLOT
+##def visualization1():
+##    for i in range(128):
+##        print(i)
+##        map_image=loop(i)
+###        scipy.misc.imsave('IMAGES/fishneuron%d.jpg' %(i+1), map_image)
+##
+##def visualization3():
+###    input1=np.zeros((1, 64, 64, 3))+127
+##    input1=skimage.io.imread("IMAGES/paper3.jpg")
+##    input1=input1[np.newaxis,:,:,:]
+##    input1=input1.astype("float32")
+##
+##    heatmap=np.zeros((64, 64))
+##    a = model.predict([input1])
+##    b = np.argmax(a[0])
+##    print(b)
+##    african_elephant_output= model.output[:,b]
+##    lcl=model.get_layer("conv2d_12")
+##    grads=K.gradients(african_elephant_output, lcl.output)[0]
+##    pool_g=K.mean(grads, axis=(0, 1, 2))
+##    get=K.function([model.input, K.learning_phase()], [pool_g, lcl.output[0]])
+##    pool_g_value, clo_value=get([input1, 1])
+##    for i in range(3):
+##        clo_value[:,:,i] *=pool_g_value[i]
+##    heatmap= np.mean(clo_value, axis=-1)
+##    heatmap=np.maximum(heatmap, 0)
+##    
+##    img=cv2.imread("IMAGES/paper3.jpg")
+##    print(img.shape)
+##    heatmap=np.uint8(255*heatmap)
+##    print(heatmap.shape)
+##    heatmap=np.resize(heatmap, (img.shape[1], img.shape[0]))
+##    heatmap=cv2.applyColorMap(heatmap, cv2.COLORMAP_JET)
+##    superimposed_img=heatmap*0.4+img
+##    cv2.imwrite("ciao.jpg", superimposed_img)
 
 
-def visualization3():
-#    input1=np.zeros((1, 64, 64, 3))+127
-    input1=skimage.io.imread("IMAGES/paper3.jpg")
-    input1=input1[np.newaxis,:,:,:]
-    input1=input1.astype("float32")
+visualization2()
 
-    heatmap=np.zeros((64, 64))
-    a = model.predict([input1])
-    b = np.argmax(a[0])
-    print(b)
-    african_elephant_output= model.output[:,b]
-    lcl=model.get_layer("conv2d_12")
-    grads=K.gradients(african_elephant_output, lcl.output)[0]
-    pool_g=K.mean(grads, axis=(0, 1, 2))
-    get=K.function([model.input, K.learning_phase()], [pool_g, lcl.output[0]])
-    pool_g_value, clo_value=get([input1, 1])
-    for i in range(3):
-        clo_value[:,:,i] *=pool_g_value[i]
-    heatmap= np.mean(clo_value, axis=-1)
-    heatmap=np.maximum(heatmap, 0)
-    
-    img=cv2.imread("IMAGES/paper3.jpg")
-    print(img.shape)
-    heatmap=np.uint8(255*heatmap)
-    print(heatmap.shape)
-    heatmap=np.resize(heatmap, (img.shape[1], img.shape[0]))
-    heatmap=cv2.applyColorMap(heatmap, cv2.COLORMAP_JET)
-    superimposed_img=heatmap*0.4+img
-    cv2.imwrite("ciao.jpg", superimposed_img)
+#layer_name=model.layers[12].name
+#layer_name=model.layers[0].name
+#w = [[0]*128 for i in range(nc)]
+#for i in range(128):
+#    for j in range (nc):
+#        w[j][i]=model.layers[15].get_weights()[0][i][j]
+#print("hello")
 
-if visualization==1:
-    visualization1()
-elif visualization==2:
-    visualization2()
-elif visualization==3:
-    visualization3()
+##def remap(m):
+##    return ((0.5+m/2)*255).astype("uint8") 
+###    return np.clip(((m-np.mean(m))/np.std(m)+0.5)*255,0,255).astype("uint8")
 
+##def adapt_input(im, size):
+##    h, w = im.shape[0:2]
+##    sz = min(h, w)
+##    im=im[(h//2-sz//2):(h//2+sz//2),(
+##        w//2-sz//2):(w//2+sz//2),:] 
+##    im = skimage.transform.resize(im, (size, size, 3), mode='reflect')
+##    return im
+
+##def loop(neuron_nr):
+##    X=np.random.random((1, 64, 64, 3))
+##    X=np.zeros((1, 64, 64, 3))
+##    X.fill(0.5)
+##    objective=model.get_layer(layer_name).output[0,neuron_nr]
+##    c=K.gradients(objective, model.input)[0]
+##    c /= (K.sqrt(K.mean(K.square(c))) + 1e-5)
+##    get=K.function([model.input],[objective, c])
+##    for j in range(iterations):
+###        img2=remap(input1[0])
+###        scipy.misc.imsave('IMAGES/scissors_it%d.jpg' %(j+1), img2)
+##        loss_value, grads_value=get([X])
+##        print(grads_value)
+##        print(np.mean(grads_value))
+###        print(grads_value[0].shape)
+###        grads_value[0,:,:,1].fill(0)
+###        grads_value[0,:,:,2].fill(0)
+###        plt.imshow(np.clip(grads_value[0]*step, -1, 1), vmin=-1, vmax=1)
+###        plt.show()
+##        X += grads_value*step
+##        X=np.clip(X, 0, 1)
+##        print(j)
+##    plt.imshow(X[0])
+##    plt.show()
+##    return X
 
 #    plt.matshow(heatmap)
 #    plt.show()
