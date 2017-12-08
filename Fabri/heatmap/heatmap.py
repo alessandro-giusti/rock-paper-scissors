@@ -8,13 +8,13 @@ from keras import backend as K
 from keras import layers
 
 # USER OPTIONS
-model_name="nemobest.model"
+model_name="rps.model"
 step=1
 iterations=300
 trick1=1
 trick2=1
 trick3=1
-output_nr=0
+output_nr=1
 
 # VARIABLES
 model = keras.models.load_model(model_name)
@@ -24,6 +24,7 @@ print(dense2_name)
 input3=[]
 input2=skimage.io.imread("IMAGES/dory.jpg")
 print(input2.shape)
+get2 = K.function([model.layers[0].input], [model.layers[15].output[0,output_nr]])
 input3.append(input2)
 nc=model.output_shape[1]
 final_output=np.zeros((64*2, 64*iterations//9, 3))
@@ -56,44 +57,55 @@ def visualization2():
     X=np.zeros((1, 64, 64, 3))
     X.fill(0.5)
 #    X=input3
-#    objective = model.get_layer(layer_name).output[0,:,:,0]
-    objective = model.output[0,output_nr]
+    objective = model.get_layer(layer_name).output[0,:,:,0]
+    ideal=0
+    best=0
+#    objective = model.output[0,output_nr]
     if trick3==1:
         objective = model.get_layer(dense2_name).output[0,output_nr]
     c=K.gradients(objective, model.input)[0]
 #    c /= (K.sqrt(K.mean(K.square(c))) + 1e-5)
     get=K.function([model.input, K.learning_phase()],[objective, c])
+    get2 = K.function([model.layers[0].input, K.learning_phase()], [model.layers[15].output[0,output_nr]])
     for j in range(iterations):
         if (trick1==1 and j<6):
             trick(j)
 #            spegni_mappe1()
         loss_value, grads_value=get([X, 1])
-        print(grads_value[0,30,:,1])
-        print(np.mean(grads_value))
+#        print(grads_value[0,30,:,1])
+#        print(np.mean(grads_value))
         if (trick2==1 and np.max(grads_value)>0):
-            step=0.6/np.max(grads_value)
-        if (j%10)==0:
-            final_output[0:64,A:(64+A),:]=(np.clip(grads_value[0]*step+0.5, 0, 1))
-            final_output[64:128,A:(64+A),:]=X[0]
-            A+=64
+            step=1/np.max(grads_value)
+#        if (j%10)==0:
+#            final_output[0:64,A:(64+A),:]=(np.clip(grads_value[0]*step+0.5, 0, 1))
+#            final_output[64:128,A:(64+A),:]=X[0]
+#            A+=64
 #        grads_value[0,:,:,1].fill(0)
 #        grads_value[0,:,:,2].fill(0)
         X += grads_value*step
         X=np.clip(X, 0, 1)
+        ideal= get2([X, 1])
         untrick()
         out=model.predict(X)
-        result[j]=out[0][output_nr]
+        result[j]=ideal[0]
+        if (ideal[0]>best and j>6):
+            plt.imsave('image.jpg', X[0], vmin=0, vmax=1)
+            print (j)
+            print (ideal[0])
+            best=ideal[0]
+        print("objective", ideal[0])
         print(j)
     print("grads_value", np.mean(grads_value))
     print("np.min", np.min(X[0]))
     print("np.max", np.max(X[0]))
+
 #    X[:,:,0].fill(0)
 #    final_output[:,:,1].fill(0) final_output[:,:,2].fill(0)
-    plt.imshow(final_output, vmin=0, vmax=1)
-    plt.show()
+#    plt.imshow(final_output, vmin=0, vmax=1)
+#    plt.show()
     plt.plot(result)
     plt.show()
-    plt.imsave('image.jpg', X[0], vmin=0, vmax=1)
+#    plt.imsave('image.jpg', X[0], vmin=0, vmax=1)
     X1=np.random.random((1, 64, 64, 3))
     out=model.predict(X)
 
