@@ -8,7 +8,7 @@ from keras import backend as K
 from keras import layers
 
 # USER OPTIONS
-model_name="rps.model"
+model_name="mnist.model"
 step=1
 iterations=300
 trick1=1
@@ -148,7 +148,7 @@ def visualization2():
 ##    cv2.imwrite("ciao.jpg", superimposed_img)
 
 
-visualization2()
+# visualization2()
 
 #layer_name=model.layers[12].name
 #layer_name=model.layers[0].name
