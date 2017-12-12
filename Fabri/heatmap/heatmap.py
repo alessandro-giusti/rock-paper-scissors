@@ -110,6 +110,7 @@ def visualization2():
     out=model.predict(X)
 
     print(out[0])
+
 ### PLOT
 ##def visualization1():
 ##    for i in range(128):
