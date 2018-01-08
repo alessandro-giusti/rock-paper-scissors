@@ -11,6 +11,7 @@ import java.util.Calendar;
 
 import android.app.AlertDialog;
 import android.content.DialogInterface;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
@@ -27,6 +28,9 @@ import android.os.Build;
 import android.os.Bundle;
 import android.app.Activity;
 import android.provider.Settings;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
+import android.text.Layout;
 import android.util.Log;
 import android.view.Surface;
 import android.view.SurfaceView;
@@ -34,14 +38,15 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.CompoundButton;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.Spinner;
+import android.widget.Switch;
 import android.widget.TextView;
-
-
-
+import android.widget.ToggleButton;
 
 
 public class MainActivity extends Activity {
@@ -50,19 +55,21 @@ public class MainActivity extends Activity {
     private final static int imgSize = 500;
     ImageView imageSmallPreview;
 
+    String currentPhotoPath;
     ImageView labelGiver;
+    Switch toggle;
     Bitmap image;
     Bitmap imagePreview;
     String label;
+    //TODO FOR DIFFERENT PREVIEW FrameLayout cameraContainer;
     SurfaceView previewSurface;
     Activity context;
     Preview preview;
+    //TODO FOR DIFFERENT PREVIEW Preview2 preview;
     Camera camera;
     ImageView fotoButton;
     ImageView bigPreview;
     ImageView connectionStatus;
-    Spinner sp;
-    ArrayAdapter<String> spAdp;
     ImageView givenLabel;
     LinearLayout progressLayout;
     String path = "/sdcard/KutCamera/cache/images/";
@@ -70,6 +77,23 @@ public class MainActivity extends Activity {
     ImageView deleteButton;
     View[] disabledDuringLoading;
 
+
+
+    class deleteCommand extends Command
+    {
+        public void execute()
+        {
+            imageSmallPreview.setImageDrawable(null);
+            givenLabel.setImageDrawable(null);
+            File file = new File(currentPhotoPath);
+            boolean deleted = file.delete();
+            deleteButton.setVisibility(View.INVISIBLE);
+
+
+        }
+
+
+    }
 
     class testUpdates extends Command
     {
@@ -229,9 +253,9 @@ public class MainActivity extends Activity {
         canvas.drawRect(paper2, pomodoro);
         canvas.drawRect(scissor2, pomodoro);
 
-        Bitmap bitR = BitmapFactory.decodeResource(getResources(), R.drawable.rps_r);
-        Bitmap bitP = BitmapFactory.decodeResource(getResources(), R.drawable.rps_p);
-        Bitmap bitS = BitmapFactory.decodeResource(getResources(), R.drawable.rps_s);
+        Bitmap bitR = BitmapFactory.decodeResource(getResources(), R.drawable.rock_old);
+        Bitmap bitP = BitmapFactory.decodeResource(getResources(), R.drawable.paper_old);
+        Bitmap bitS = BitmapFactory.decodeResource(getResources(), R.drawable.scissor_old);
         canvas.drawBitmap(bitR,imgSize*2/6 - rectWidth,imgSize-imgSize/10 ,null );
         canvas.drawBitmap(bitP,imgSize*3/6 - rectWidth,imgSize-imgSize/10 ,null );
         canvas.drawBitmap(bitS,imgSize*4/6 - rectWidth,imgSize-imgSize/10 ,null );
@@ -246,60 +270,58 @@ public class MainActivity extends Activity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 
+
+
 		isTraining = true;
 		context=this;
         image = null;
         label = "Rock";
+        currentPhotoPath="";
         connectionStatus = (ImageView)findViewById(R.id.connection_status);
         bigPreview = (ImageView)findViewById(R.id.image_big_preview);
         givenLabel = (ImageView) findViewById(R.id.image_small_result);
 		fotoButton = (ImageView) findViewById(R.id.take_pic);
-        sp = (Spinner) findViewById(R.id.spinner);
-        spAdp = new ArrayAdapter<String>(this, R.layout.row);
+        toggle =  (Switch) findViewById(R.id.testortrain);
+
         labelGiver =  (ImageView) findViewById(R.id.label_view);
         imageSmallPreview = (ImageView) findViewById(R.id.image_small_preview);
         deleteButton = (ImageView) findViewById(R.id.deletebutton);
 		progressLayout = (LinearLayout) findViewById(R.id.progress_layout);
-        previewSurface=(SurfaceView) findViewById(R.id.KutCameraFragment);
+
+		//REMOVE FOR DIFFERENT PREVIEW
+		previewSurface=(SurfaceView) findViewById(R.id.KutCameraFragment);
 		preview = new Preview(this,previewSurface);
 		FrameLayout frame = (FrameLayout) findViewById(R.id.preview);
 		frame.addView(preview);
 		preview.setKeepScreenOn(true);
+        //END REMOVE FOR DIFFERENT PREVIEW
 
-        spAdp.addAll(new String[]{"Training", "Testing"});
-        sp.setAdapter(spAdp);
+        //TODO FOR DIFFERENT PREVIEW cameraContainer = (FrameLayout) findViewById(R.id.preview);
+
+
+
         deleteButton.setVisibility(View.INVISIBLE);
-        disabledDuringLoading=new View[]{deleteButton,sp,fotoButton,labelGiver};
+        disabledDuringLoading=new View[]{deleteButton,toggle,fotoButton,labelGiver};
 
-        sp.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener()
-        {
+        toggle.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if (isChecked) {
+                    isTraining=false;
+                    labelGiver.setImageDrawable(null);
+                    imageSmallPreview.setImageDrawable(null);
+                    givenLabel.setVisibility(View.INVISIBLE);
+                    deleteButton.setVisibility(View.INVISIBLE);
 
-
-            public void onItemSelected(AdapterView<?> arg0, View arg1, int arg2, long arg3) {
-                TextView txt=(TextView) arg1.findViewById(R.id.rowtext);
-                String s=txt.getText().toString();
-                bigPreview.setImageDrawable(null);
-                if (s.equals("Training")){
+                } else {
                     isTraining=true;
                     labelGiver.performClick();
-					givenLabel.setVisibility(View.VISIBLE);
-					givenLabel.setImageResource(R.drawable.fotocekicon);
+                    givenLabel.setVisibility(View.VISIBLE);
+                    givenLabel.setImageDrawable(null);
+                    deleteButton.setVisibility(View.INVISIBLE);
                 }
-                else{
-                    isTraining=false;
-                    labelGiver.setImageResource(R.drawable.fotocekicon);
-                    imageSmallPreview.setImageResource(R.drawable.fotocekicon);
-                    givenLabel.setVisibility(View.INVISIBLE);
-
-                }
-
-
             }
-
-            @Override
-            public void onNothingSelected(AdapterView<?> arg0)
-            { }
         });
+
 
 
 
@@ -316,8 +338,8 @@ public class MainActivity extends Activity {
 
 				}
 
-				fotoButton.setClickable(false);
-				progressLayout.setVisibility(View.VISIBLE);
+
+
                 bigPreview.setImageDrawable(null);
                 for (View x : disabledDuringLoading) x.setClickable(false);
 			}
@@ -339,10 +361,8 @@ public class MainActivity extends Activity {
             @Override
             public void onClick(View v) {
 
-                HttpClient.deletePhoto();
-                imageSmallPreview.setImageResource(R.drawable.fotocekicon);
-                givenLabel.setImageResource(R.drawable.fotocekicon);
-                deleteButton.setVisibility(View.INVISIBLE);
+                HttpClient.deletePhoto(new deleteCommand(), new NotConnected());
+
             }
         });
 
@@ -404,7 +424,15 @@ public class MainActivity extends Activity {
 			if (Build.VERSION.SDK_INT >= 14)
 				setCameraDisplayOrientation(context,
 						CameraInfo.CAMERA_FACING_BACK, camera);
+            //REMOVE FOR CHANGE PREVIEW
+
 			preview.setCamera(camera);
+
+            //END REMOVE FOR CHANGE PREVIEW
+
+
+            //TODO FOR CHANGE PREVIEW preview = new Preview2(this,camera);
+            //TODO FOR CHANGE PREVIEW  cameraContainer.addView(preview);
 		}
 	}
 	
@@ -478,12 +506,13 @@ public class MainActivity extends Activity {
 		@SuppressWarnings("deprecation")
 		public void onPictureTaken(byte[] data, Camera camera) {
 
-
+            progressLayout.setVisibility(View.VISIBLE);
 			Calendar c = Calendar.getInstance();
 			File fotoDir = new File(path);
 
             //File fotoriginal = new File(path + "original_" + label + "_" + c.getTime().getDate() + c.getTime().getHours() + c.getTime().getMinutes() + c.getTime().getSeconds() + ".jpg");
-            File foto = new File(path + label + "_" + c.getTime().getDate() + c.getTime().getHours() + c.getTime().getMinutes() + c.getTime().getSeconds() + ".jpg");
+            currentPhotoPath=path + label + "_" + c.getTime().getDate() + c.getTime().getHours() + c.getTime().getMinutes() + c.getTime().getSeconds() + ".jpg";
+            File foto = new File(currentPhotoPath);
 
             ByteArrayOutputStream stream = new ByteArrayOutputStream();
 

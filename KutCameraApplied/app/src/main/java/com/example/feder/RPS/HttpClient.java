@@ -49,8 +49,9 @@ class lastImage{
 class ServiceGenerator {
 
     //private static final String BASE_URL = "http://[2001:0:9d38:6abd:15:1230:f5f4:efe9]:8080";
-    private static final String BASE_URL = "http://rps.idsia.ch";
+    private static final String BASE_URL = "https://rps.idsia.ch";
     //private static final String BASE_URL = "http://192.168.1.107:8000";
+    //private static final String BASE_URL = "http://10.11.16.43:8000";
 
     private static Retrofit.Builder builder =
             new Retrofit.Builder()
@@ -241,7 +242,7 @@ public class HttpClient {
     }
 
 
-    public static void deletePhoto() {
+    public static void deletePhoto(Command ifSuccess, Command ifFailure) {
         DeleteService service = ServiceGenerator.createService(DeleteService.class);
 
         Call<ResponseBody> call = service.delete(lastImage.get());
@@ -252,7 +253,9 @@ public class HttpClient {
                 ResponseBody body =response.body();
                 try {
                     Log.d(TAG, body.string());
+                    ifSuccess.execute();
                 } catch (IOException|NullPointerException e) {
+                    ifFailure.execute();
                     Log.e(TAG, "Failure converting body to string");
                 }
 
@@ -266,6 +269,7 @@ public class HttpClient {
             @Override
             public void onFailure(Call<ResponseBody> call, Throwable t) {
                 Log.e(TAG, "Upload error:"+ t.getMessage());
+                ifFailure.execute();
             }
         });
 
