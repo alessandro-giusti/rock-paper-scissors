@@ -17,12 +17,16 @@ from skimage import transform
 from os import makedirs
 import keras
 import numpy as np
-
+from falcon import HTTP_400
 
 
 ###Global variables:
 logger_container = []
 model_container = []
+allowed=[]
+pending=[]
+black=[]
+
 model_name="rps.model"
 
 def translate_id(dev_id,label):
@@ -52,31 +56,91 @@ def adapt_input(im, size):
     im = skimage.transform.resize(im, (size, size, 3), mode='reflect')
     return im
 
+def check_if_allowed(device_id):
+    if device_id in allowed:
+        return True
+    else:
+        return False
+
+def check_if_pending(device_id):
+    if device_id in pending:
+        return True
+    else:
+        return False
+
+    
+def check_if_black(device_id):
+    if device_id in black:
+        return True
+    else:
+        return False
+    
+def check_evil_id(device_id):
+    if '/' in device_id or '.' in device_id:
+        black.append[device_id]
+        with open('black.txt', "a") as f:
+            f.write(device_id + '\n')
+            
+def check_id(device_id, response):
+    check_evil_id(device_id)
+    if check_if_allowed(device_id):
+        return 0
+    else:
+        if check_if_black(device_id):
+            response.status = HTTP_400
+            return 1
+        else:
+            with open('pending.txt', "a") as f:
+                f.write(device_id + '\n')
+            response.status = HTTP_400
+            return 2
+
+
+@hug.post()
+def refresh():
+    
+    with open('allowed.txt', "r") as f:
+         allowed.clear()
+         allowed.extend(f.read().splitlines())
+    with open('pending.txt', "r") as f:
+         pending.clear()
+         pending.extend(f.read().splitlines())
+    with open('black.txt', "r") as f:
+         black.clear()
+         black.extend(f.read().splitlines())
+
+
+
 
 @hug.startup()
 def init(api):
      logger_container.append(init_logger())
      model_container.append(keras.models.load_model(model_name))
+     with open('allowed.txt', "r") as f:
+         allowed.extend(f.read().splitlines())
+     with open('pending.txt', "r") as f:
+         pending.extend(f.read().splitlines())
+     with open('black.txt', "r") as f:
+         black.extend(f.read().splitlines())
+         
+     
     
     
     
-    
-@hug.local()
-@hug.get(examples='name=Timothy&age=26')
-def happy_birthday(name, age, hug_timer=3):
-    """Says happy birthday to a user"""
-    return {'message': 'Happy {0} Birthday {1}!'.format(age, name),
-            'took': float(hug_timer)}
 @hug.get()
+def testDeviceId(device_id,response):
+    control= check_id(device_id, response)
+    if control == 2:
+        return {'error': "not approved yet"}
+    elif control == 1:
+        return {'error': "device blacklisted"} 
+
+@hug.get('/')
 def test():
      return {'message': 'server is online'}
 
-@hug.get("/tost")
-def testString():
-    return "Ciao"
-
 @hug.post()
-def photo(body,request):
+def photo(body,request, response):
     """
     Labels: "rock, paper, scissor, testing"
     """
@@ -86,6 +150,12 @@ def photo(body,request):
     
     label = body["label"].decode("utf-8") 
     device_id = body["deviceId"].decode("utf-8") 
+    
+    control= check_id(device_id, response)
+    if control == 2:
+        return {'error': "not approved yet"}
+    elif control == 1:
+        return {'error': "device blacklisted"} 
     
     
     file_name = translate_id(device_id, label) #TODO check if JPG is alright
@@ -118,8 +188,17 @@ def photo(body,request):
     #return filename
     #if testing, return test results
     
-@hug.delete('/photo/{deviceId}')
-def photo(deviceId):
-    label=deviceId.split("-")[1]
-    os.remove(label+"/"+deviceId) 
+@hug.delete('/photo/{photoname}')
+def photo(photoname,response):
+    label=photoname.split("-")[1]
+    device_id=photoname.split("-")[2]
+    control= check_id(device_id, response)
+    if control == 2:
+        return {'error': "not approved yet"}
+    elif control == 1:
+        return {'error': "device blacklisted"} 
+    
+    os.remove(label+"/"+photoname) 
+
+
        

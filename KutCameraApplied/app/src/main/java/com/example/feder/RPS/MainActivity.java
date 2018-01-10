@@ -19,6 +19,7 @@ import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Rect;
+import android.graphics.drawable.VectorDrawable;
 import android.hardware.Camera;
 import android.hardware.Camera.CameraInfo;
 import android.hardware.Camera.ErrorCallback;
@@ -28,8 +29,8 @@ import android.os.Build;
 import android.os.Bundle;
 import android.app.Activity;
 import android.provider.Settings;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
+import android.support.graphics.drawable.VectorDrawableCompat;
+import android.support.v7.app.AppCompatDelegate;
 import android.text.Layout;
 import android.util.Log;
 import android.view.Surface;
@@ -50,14 +51,16 @@ import android.widget.ToggleButton;
 
 
 public class MainActivity extends Activity {
-
+    static {
+        AppCompatDelegate.setCompatVectorFromResourcesEnabled(true);
+    }
     private final static String TAG = "RPS";
     private final static int imgSize = 500;
     ImageView imageSmallPreview;
 
     String currentPhotoPath;
     ImageView labelGiver;
-    Switch toggle;
+    ToggleButton toggle;
     Bitmap image;
     Bitmap imagePreview;
     String label;
@@ -223,42 +226,65 @@ public class MainActivity extends Activity {
         Paint paint = new Paint();
         paint.setColor(Color.TRANSPARENT);
 
-        Paint banana = new Paint();
-        banana.setColor(Color.YELLOW);
+        Paint bianco = new Paint();
+        bianco.setColor(Color.WHITE);
 
-        Paint pomodoro = new Paint();
-        pomodoro.setColor(Color.RED);
+        Paint nero = new Paint();
+        nero.setColor(Color.BLACK);
 
-        int rectWidth=imgSize/20;
-        int rectWidth2=imgSize/25;
+        int rectWidth=imgSize/13;
+        int rectWidth2=imgSize/14;
 
         int paperHeight = pp * (imgSize/100);
         int rockHeight = pr * (imgSize/100);
         int scissorHeight = ps * (imgSize/100);
 
-        Rect rock = new Rect(imgSize*2/6 - rectWidth, (imgSize-rockHeight/2) - imgSize/10, imgSize*2/6 + rectWidth, imgSize-imgSize/10 );
-        Rect paper = new Rect(imgSize*3/6 - rectWidth, (imgSize-paperHeight/2) - imgSize/10, imgSize*3/6 + rectWidth, imgSize- imgSize/10);
-        Rect scissor = new Rect(imgSize*4/6 - rectWidth, (imgSize-scissorHeight/2) - imgSize/10, imgSize*4/6 + rectWidth, imgSize- imgSize/10);
+        Rect rock = new Rect(imgSize*2/6 - rectWidth, (imgSize-rockHeight/2) - imgSize/7, imgSize*2/6 + rectWidth, imgSize-imgSize/7 );
+        Rect paper = new Rect(imgSize*3/6 - rectWidth, (imgSize-paperHeight/2) - imgSize/7, imgSize*3/6 + rectWidth, imgSize- imgSize/7);
+        Rect scissor = new Rect(imgSize*4/6 - rectWidth, (imgSize-scissorHeight/2) - imgSize/7, imgSize*4/6 + rectWidth, imgSize- imgSize/7);
 
-        Rect rock2 = new Rect(imgSize*2/6 - rectWidth2, (imgSize-rockHeight/2)- imgSize/10 + rockHeight/50, imgSize*2/6 + rectWidth2, imgSize- imgSize/10 - rockHeight/50);
-        Rect paper2 = new Rect(imgSize*3/6 - rectWidth2, (imgSize-paperHeight/2)- imgSize/10 + paperHeight/50, imgSize*3/6 + rectWidth2, imgSize- imgSize/10 - paperHeight/50);
-        Rect scissor2 = new Rect(imgSize*4/6 - rectWidth2, (imgSize-scissorHeight/2)- imgSize/10 + scissorHeight/50, imgSize*4/6 + rectWidth2, imgSize- imgSize/10 -scissorHeight/50 );
+        int rockBorder = 0;
+        if (rockHeight> 30 ) rockBorder = 10;
+        int paperBorder = 0;
+        if (paperHeight> 30 ) paperBorder = 10;
+        int scissorBorder = 0;
+        if (scissorHeight> 30 ) scissorBorder = 10;
+
+
+        Rect rock2 = new Rect(imgSize*2/6 - rectWidth2, (imgSize-rockHeight/2)- imgSize/7 + rockBorder, imgSize*2/6 + rectWidth2, imgSize- imgSize/7 - rockBorder);
+        Rect paper2 = new Rect(imgSize*3/6 - rectWidth2, (imgSize-paperHeight/2)- imgSize/7 + paperBorder, imgSize*3/6 + rectWidth2, imgSize- imgSize/7 - paperBorder);
+        Rect scissor2 = new Rect(imgSize*4/6 - rectWidth2, (imgSize-scissorHeight/2)- imgSize/7 + scissorBorder, imgSize*4/6 + rectWidth2, imgSize- imgSize/7 -scissorBorder );
 
 
         canvas.drawRect(background, paint);
-        canvas.drawRect(rock, banana);
-        canvas.drawRect(paper, banana);
-        canvas.drawRect(scissor, banana);
-        canvas.drawRect(rock2, pomodoro);
-        canvas.drawRect(paper2, pomodoro);
-        canvas.drawRect(scissor2, pomodoro);
+        canvas.drawRect(rock, bianco);
+        canvas.drawRect(paper, bianco);
+        canvas.drawRect(scissor, bianco);
+        canvas.drawRect(rock2, nero);
+        canvas.drawRect(paper2, nero);
+        canvas.drawRect(scissor2, nero);
 
-        Bitmap bitR = BitmapFactory.decodeResource(getResources(), R.drawable.rock_old);
-        Bitmap bitP = BitmapFactory.decodeResource(getResources(), R.drawable.paper_old);
-        Bitmap bitS = BitmapFactory.decodeResource(getResources(), R.drawable.scissor_old);
-        canvas.drawBitmap(bitR,imgSize*2/6 - rectWidth,imgSize-imgSize/10 ,null );
-        canvas.drawBitmap(bitP,imgSize*3/6 - rectWidth,imgSize-imgSize/10 ,null );
-        canvas.drawBitmap(bitS,imgSize*4/6 - rectWidth,imgSize-imgSize/10 ,null );
+        VectorDrawableCompat vR = VectorDrawableCompat.create(getResources(), R.drawable.rps_r, null );
+        vR.setBounds(0,0, rectWidth*2,rectWidth*2);
+        canvas.translate(imgSize*2/6 - rectWidth, (imgSize-imgSize/7 )  );
+        vR.draw(canvas);
+        canvas.translate(-(imgSize*2/6 - rectWidth), -(imgSize-imgSize/7 )  );
+        VectorDrawableCompat vP = VectorDrawableCompat.create(getResources(), R.drawable.rps_p, null );
+        vP.setBounds(0,0, rectWidth*2,rectWidth*2);
+        canvas.translate(imgSize*3/6 - rectWidth, (imgSize-imgSize/7 )  );
+        vP.draw(canvas);
+        canvas.translate(-(imgSize*3/6 - rectWidth), -(imgSize-imgSize/7 )  );
+        VectorDrawableCompat vS = VectorDrawableCompat.create(getResources(), R.drawable.rps_s, null );
+        vS.setBounds(0,0, rectWidth*2,rectWidth*2);
+        canvas.translate(imgSize*4/6 - rectWidth, (imgSize-imgSize/7 )  );
+        vS.draw(canvas);
+        canvas.translate(-(imgSize*4/6 - rectWidth), -(imgSize-imgSize/7 )  );
+        //Bitmap bitR = BitmapFactory.decodeResource(getResources(), R.drawable.rps_r);
+        //Bitmap bitP = BitmapFactory.decodeResource(getResources(), R.drawable.rps_p);
+        //Bitmap bitS = BitmapFactory.decodeResource(getResources(), R.drawable.rps_s);
+        //canvas.drawBitmap(bitR,imgSize*2/6 - rectWidth,imgSize-imgSize/10 ,null );
+        //canvas.drawBitmap(bitP,imgSize*3/6 - rectWidth,imgSize-imgSize/10 ,null );
+       // canvas.drawBitmap(bitS,imgSize*4/6 - rectWidth,imgSize-imgSize/10 ,null );
 
         return image;
     }
@@ -281,7 +307,7 @@ public class MainActivity extends Activity {
         bigPreview = (ImageView)findViewById(R.id.image_big_preview);
         givenLabel = (ImageView) findViewById(R.id.image_small_result);
 		fotoButton = (ImageView) findViewById(R.id.take_pic);
-        toggle =  (Switch) findViewById(R.id.testortrain);
+        toggle =  (ToggleButton) findViewById(R.id.testortrain);
 
         labelGiver =  (ImageView) findViewById(R.id.label_view);
         imageSmallPreview = (ImageView) findViewById(R.id.image_small_preview);
@@ -305,6 +331,7 @@ public class MainActivity extends Activity {
 
         toggle.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+
                 if (isChecked) {
                     isTraining=false;
                     labelGiver.setImageDrawable(null);

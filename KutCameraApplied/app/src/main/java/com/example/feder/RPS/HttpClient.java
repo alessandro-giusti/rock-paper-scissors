@@ -131,7 +131,7 @@ public class HttpClient {
                 ResponseBody body =response.body();
                 try {
                     String s = body.string();
-                    s = s.replace("\"","");
+                    //s = s.replace("\"","");
                     lastImage.set(s);
                     Log.v(TAG, "Upload success: "+s);
                     toDoAfter.execute();
