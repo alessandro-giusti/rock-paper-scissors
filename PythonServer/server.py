@@ -21,8 +21,6 @@ from falcon import HTTP_400
 
 
 ###Global variables:
-logger_container = []
-model_container = []
 allowed=[]
 pending=[]
 black=[]
@@ -114,6 +112,9 @@ def refresh():
 
 @hug.startup()
 def init(api):
+     
+     logger_container = []
+     model_container = []
      logger_container.append(init_logger())
      model_container.append(keras.models.load_model(model_name))
      with open('allowed.txt', "r") as f:
