@@ -1,0 +1,24 @@
+﻿Problema: si vuole sviluppare un sistema che permetta di poter acquisire con facilità i dati per risolvere problemi di image recognition, che abbia come fonti persone comuni, le quali possono inviare immagini ed altri dati attraverso un’applicazione. 
+Sviluppare questo tipo di sistema presenta grandi difficoltà, le quali non sono strettamente tecniche. In primo luogo:
+
+L’utente deve essere incentivato a partecipare
+Può succedere che vengano postate immagini non inerenti al problema
+
+Secondariamente, ci sono anche gli aspetti di performance da valutare. Se ci fossero anche solo dieci utenti, allenare da zero la rete neurale per ogni foto che essi caricano sarebbe folle.
+Nota: l’idea di base è che non c’è una vera fine per un progetto, esso rimane attivo “in eterno”. Quindi il training può avvenire in contemporanea al testing.
+
+Decidere ogni quanto tempo aggiornare le reti
+Gestire efficacemente la separazione di training e testing
+Definire appieno quanta libertà ha un progetto (spazio di archiviazione, tempo di calcolo)
+
+C’è anche da capire chi decide la struttura della rete neurale. Si potrebbe lasciare questo task all’utente medio, dopo avergli spiegato le basi, o dev’esserci un esperto dietro? IDSIA può guadagnare qualcosa su questo processo?
+
+Valutare un business plan
+Capire chi sta dietro alla creazione della rete neurale
+
+Infine, vi sono dei problemi molto più di nicchia: se voglio fare una rete neurale che mi riconosca che tipo di fiore ho in mano, sorgono subito due difficoltà
+
+Per distinguere tra un numero di classi alto (anche banalmente superiore a 5) avrò bisogno di enormi quantità di immagini, e potrebbe ancora non essere sufficiente
+Non è garantito che l’utente medio sappia davvero che tipo di fiori stia fotografando
+
+Tutti i problemi sorti, verranno sintetizzati il più possibile per poi essere esaminati.
