@@ -1,7 +1,7 @@
 # Introducing Machine Learning Concepts by Training a Neural Network to Recognize Hand Gestures
 Rock Paper Scissors educational activity for ML
 
-See [paper](./AAAI_Paper.pdf).
+See [paper](./EAAI_Paper.pdf).
 
 Cite as
 
