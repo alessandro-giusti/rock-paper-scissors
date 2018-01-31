@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/RPS/RPS.iml" filepath="$PROJECT_DIR$/RPS/RPS.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/RPS_App.iml" filepath="$PROJECT_DIR$/.idea/modules/RPS_App.iml" />
+      <module fileurl="file://$PROJECT_DIR$/RPS_App/RPS_App.iml" filepath="$PROJECT_DIR$/RPS_App/RPS_App.iml" />
+      <module fileurl="file://$PROJECT_DIR$/RPS_App/RPS_App-RPS_App.iml" filepath="$PROJECT_DIR$/RPS_App/RPS_App-RPS_App.iml" />
+      <module fileurl="file://$PROJECT_DIR$/RPS_App/app.iml" filepath="$PROJECT_DIR$/RPS_App/app.iml" />
+    </modules>
+  </component>
+</project>
