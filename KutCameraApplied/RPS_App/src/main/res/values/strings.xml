@@ -1,6 +1,0 @@
-<resources>
-    <string name="app_name">RPS</string>
-    <string name="action_settings">Settings</string>
-    <string name="mode_1">training</string>
-    <string name="mode_2">testing</string>
-</resources>
