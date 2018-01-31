@@ -12,8 +12,6 @@ import os
 import logging
 import datetime
 import skimage
-from skimage import io
-from skimage import transform
 from os import makedirs
 import keras
 import numpy as np
@@ -24,7 +22,8 @@ from falcon import HTTP_400
 allowed=[]
 pending=[]
 black=[]
-
+logger = None
+model=None
 model_name="rps.model"
 
 def translate_id(dev_id,label):
@@ -32,6 +31,7 @@ def translate_id(dev_id,label):
 
 def init_logger():
    
+    
     logger = logging.getLogger(__name__)
     logger.setLevel(logging.INFO)
 
@@ -113,10 +113,11 @@ def refresh():
 @hug.startup()
 def init(api):
      
-     logger_container = []
-     model_container = []
-     logger_container.append(init_logger())
-     model_container.append(keras.models.load_model(model_name))
+     
+     global logger
+     logger = init_logger()
+     global model
+     model = keras.models.load_model(model_name)
      with open('allowed.txt', "r") as f:
          allowed.extend(f.read().splitlines())
      with open('pending.txt', "r") as f:
@@ -140,14 +141,14 @@ def testDeviceId(device_id,response):
 def test():
      return {'message': 'server is online'}
 
-@hug.post()
-def photo(body,request, response):
+@hug.post('/photo')
+def photo_post(body,request, response):
     """
     Labels: "rock, paper, scissor, testing"
     """
     
-    logger = logger_container[0]
-    model = model_container[0]
+    global logger
+    global model
     
     label = body["label"].decode("utf-8") 
     device_id = body["deviceId"].decode("utf-8") 
@@ -190,7 +191,7 @@ def photo(body,request, response):
     #if testing, return test results
     
 @hug.delete('/photo/{photoname}')
-def photo(photoname,response):
+def photo_delete(photoname,response):
     label=photoname.split("-")[1]
     device_id=photoname.split("-")[2]
     control= check_id(device_id, response)
@@ -200,6 +201,10 @@ def photo(photoname,response):
         return {'error': "device blacklisted"} 
     
     os.remove(label+"/"+photoname) 
+    
+@hug.not_found()
+def not_found():
+    return {'Nothing': 'to see'}
 
 
        
