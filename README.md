@@ -14,7 +14,7 @@ Cite as
     
 ## Resources
 
-[Activity notebook](./Activity notebook/) contains the main code (notebook and realtime application), and an example of realtime video.
+*Activity notebook* contains the main code (notebook and realtime application), and an example of realtime video.
 
-[RPS App](./RPS App/) and [RPS Server](./RPS Server/) contain (unrealeased and pre-alpha quality) supporting software, i.e. an android app to automate data collection and its server component.
+*RPS App* and *RPS Server* contain (unrealeased and pre-alpha quality) supporting software, i.e. an android app to automate data collection and its server component.
 
