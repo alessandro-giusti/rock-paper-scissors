@@ -24,7 +24,7 @@ Infine, vi sono dei problemi molto più di nicchia: se voglio fare una rete neur
 
 Tutti i problemi sorti, verranno sintetizzati il più possibile per poi essere esaminati.
 
-
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 Come incentiviamo l’utente?
 
@@ -32,6 +32,7 @@ Come incentiviamo l’utente?
 
 - Premio in denaro. Una compagnia può voler risolto qualche tipo di problema tramite il nostro prodotto, essa potrà quindi decidere di mettere un premio in palio, che potrebbe andare al miglior partecipante, o spartito tra I partecipanti in base alla partecipazione.
 
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 Come evitare gli outliers?
 
@@ -40,11 +41,13 @@ Come evitare gli outliers?
 - Ogni immagine viene valutata da un algoritmo che le attribuisce un punteggio. Se il punteggio è basso, questo impatta la sua affidabilità
 - Se il punteggio di affidabilità di un’immagine è troppo basso, viene chiesta una conferma/un parere da un utente affidabile
 
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 Come evitare I doppioni?
 
 Difficile dirlo. Si può mettere un limite massimo di foto al minuto o all'ora, e si può verificare l'efficiacia dell'utente usando solo le sue foto per allenare la rete e guardando l'efficacia complessiva
 
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 Ogni quanto tempo aggiorno le reti?
 
@@ -52,10 +55,13 @@ Questo dipende da alcuni fattori come:
 - A partire da quale data mi serve la rete?
 - Con quanta frequenza la uso?
 
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 Come separo efficacemente training e testing?
 
 Uso il modello attuale per testare mentre alleno il modello futuro. Quando il modello futuro è pronto, aspetto che quello corrente non venga usato per sostituirli.
+
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 Quanto spazio di archiviazione e di computazione offro all'utente?
 
@@ -66,18 +72,26 @@ La computazione pesante avviene quando la rete viene allenata, e la frequenza di
 
 Potrebbe essere utile mettere a disposizione un server che computi per gli utenti non a pagamento, ed uno dedicato per le utenze premium
 
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
 Chi sta dietro alla rete neurale?
 
 In caso di utenza premium, IDSIA crea la rete per lui
+
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 Valutare un business plan?
 
 Ultimo dei problemi.
 Comunque IDSIA può guadagnare da: Utenze premium o singoli servizi (creazione Rete, aumento capacità di calcolo), trattenuta sui premi in denaro offerti nei vari progetti, proprietà/copyright sulle foto caricate dagli utenti e sulle reti create.
 
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
 Come faccio a gestire problemi dove ci sono tante classi tra le quali fare distinzione?
 
 Aggiungo la possibilità per l'utente di inserire dati extra (specificati dal creatore del progetto). Nell'esempio del distinguere i tipi di fiore, potrei ad esempio chiedere il parametro "numero di petali", "ha foglie", e altri.
+
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 Come faccio ad essere sicuro che l'utente sia esperto nel campo richiesto dal progetto?
 
