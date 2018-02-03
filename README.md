@@ -18,3 +18,4 @@ Cite as
 
 *RPS App* and *RPS Server* contain (unrealeased and pre-alpha quality) supporting software, i.e. an android app to automate data collection and its server component.
 
+*Datasets* contain a number of datasets.  A balanced 100-image testing set is included.  You are encouraged to add your own data. 
