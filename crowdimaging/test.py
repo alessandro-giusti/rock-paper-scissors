@@ -49,14 +49,36 @@ Helper methods
 
 
      
-def create_and_store_photo(problem,label,authed_user,current_time,device_id,image ):
+def create_and_store_photo(resource,problem,label,authed_user,current_time,device_id,image ):
     full_path = problem + "/" + label + "/" + authed_user + "/" + current_time + "_" +  device_id + "_" +  authed_user + "_" +  label + ".jpg"   
     for element in [problem,label,authed_user,device_id]:
         if '/' in element or '.' in element:
             return "total fail"
     os.makedirs(problem + "/" + label + "/" + authed_user, exist_ok=True)
     with open(full_path, 'wb+') as file:
-        file.write(image)   
+        file.write(image) 
+    photo = Photo()
+    photo.name = ...
+    photo.label = sa.Column(sa.Integer,nullable=False)#for each int, there is a String associated
+    photo.owner = relationship("User", backref=backref('photos'))
+    photo.project = relationship("Project", backref=backref('photos'))
+    photo.affidability = sa.Column(sa.Integer,nullable=False)
+    photo.extra_features = sa.Column(sa.String,nullable=False)
+    
+    AFTER YOU WRITE IN THE DB, IF EVERYTHING GOES FINE, PHOTO HAS AN ID
+    GIVE THAT ID TO THE USER, HE WILL SAVE THAT AS "LAST PHOTO"
+    HE WILL BE ABLE TO DELETE THE LAST PHOTO, AFTER WE CHECK THAT THE PHOTO IS from him
+    
+    
+
+    try:
+        resource.db.add(photo)
+        resource.db.flush()
+        resource.cleanup()
+        return {"Result":"succes"}
+    except Exception as err:
+        resource.cleanup(exception = err)
+        return {"Result":err} #TODO Add response status
     return full_path
      
 
@@ -177,6 +199,11 @@ def authenticate_key(resource: Resource,api_key):
 Database classes
 """#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+association_table = sa.Table('association', Base.metadata,
+    sa.Column('user_id', sa.Integer, sa.ForeignKey('users.id')),
+    sa.Column('project_id', sa.Integer, sa.ForeignKey('projects.id'))
+)
+
 class User(Base):
     __tablename__ = 'users'
     id = sa.Column(sa.Integer, primary_key=True)
@@ -188,14 +215,15 @@ class User(Base):
     
     affidability = sa.Column(sa.Integer,nullable=False)
     privilege_level=sa.Column(sa.Integer, primary_key=True) #100 Admin - 5 standard user
+    
+    projects = relationship("Project",
+                    secondary="association",
+                    back_populates="users")
+    
+    photos = relationship("Photo", back_populates="users")
+
     #def __repr__(self):
     #    return '<User(name={self.name!r})>'.format(self=self)
-
-
-class UserSchema(ModelSchema):
-    class Meta:
-        model = User
-        #sqla_session = session
 
 
 
@@ -205,16 +233,17 @@ class Project(Base):
     id = sa.Column(sa.Integer, primary_key=True)
     model_path = sa.Column(sa.String, nullable=False)
     title = sa.Column(sa.String, nullable=False)
-    owner_id = sa.Column(sa.Integer, sa.ForeignKey('users.id'),nullable=False)
-    owner = relationship("User", backref=backref('projects'))
     private = sa.Column(sa.Boolean, nullable=False)
     extra_features = sa.Column(sa.String,nullable=False) #"" for no extra features, 
 
+    users = relationship("User",
+                    secondary="association",
+                    back_populates="projects")
+    owner_id = sa.Column(sa.Integer, sa.ForeignKey('users.id'),nullable=False)
+    photos = relationship("Photo", back_populates="projects")
 
-class ProjectSchema(ModelSchema):
-    class Meta:
-        model = Project
-        #sqla_session = session
+
+
 
 
 
@@ -223,19 +252,28 @@ class Photo(Base):
     id = sa.Column(sa.Integer, primary_key=True)
     name = sa.Column(sa.String,nullable=False,unique=True)
     label = sa.Column(sa.Integer,nullable=False)#for each int, there is a String associated
-    owner_id = sa.Column(sa.Integer, sa.ForeignKey('users.id'),nullable=False)
-    owner = relationship("User", backref=backref('photos'))
-    project_id = sa.Column(sa.Integer, sa.ForeignKey('projects.id'),nullable=False)
-    project = relationship("Project", backref=backref('photos'))
     affidability = sa.Column(sa.Integer,nullable=False)
     extra_features = sa.Column(sa.String,nullable=False)
+    
+    user_id = sa.Column(sa.Integer, sa.ForeignKey('users.id'))
+    users = relationship("User", back_populates="photos")
+    project_id = sa.Column(sa.Integer, sa.ForeignKey('projects.id'))
+    projects = relationship("Project", back_populates="photos")
 
 class PhotoSchema(ModelSchema):
     class Meta:
         model = Photo
         #sqla_session = session
 
-
+class ProjectSchema(ModelSchema):
+    class Meta:
+        model = Project
+        #sqla_session = session
+        
+class UserSchema(ModelSchema):
+    class Meta:
+        model = User
+        #sqla_session = session
 
 
 
@@ -310,7 +348,7 @@ def get_token(resource: Resource, authed_user: hug.directives.user):
 
     return out
 
-@hug.post('/photo')
+@hug.post('/photo',requires=api_key_authentication)
 def photo_post(resource: Resource, authed_user: hug.directives.user,body,response):
     """
     Labels: "rock, paper, scissor, testing"
@@ -323,7 +361,7 @@ def photo_post(resource: Resource, authed_user: hug.directives.user,body,respons
     problem = body["problem"].decode("utf-8") 
     current_time = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
     image = body["image"]
-    full_path=create_and_store_photo(problem,label,authed_user,current_time,device_id,image )
+    full_path=create_and_store_photo(resource,problem,label,authed_user,current_time,device_id,image )
 
     logger.info("\n-----"+
                 "\nLabel:" + problem +
@@ -342,7 +380,12 @@ def photo_post(resource: Resource, authed_user: hug.directives.user,body,respons
         model=keras.models.load_model(project.model)
         to_test.append((adapt_input(skimage.io.imread(a_input), 64)))
         return model.predict(np.asarray(to_test)).tolist()
-
+    
+@hug.delete('/photo',requires=api_key_authentication)
+def photo_delete_last(response,authed_user: hug.directives.user):
+    user=resource.db.query(User).filter(User.username==authed_user).one()
+    
+    os.remove(label+"/"+photoname) 
 
 
 @hug.not_found()

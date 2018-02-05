@@ -24,6 +24,11 @@ Infine, vi sono dei problemi molto più di nicchia: se voglio fare una rete neur
 
 Tutti i problemi sorti, verranno sintetizzati il più possibile per poi essere esaminati.
 
+_____
+
+Dato un problema specifico, il software gestisce l'acquisizione dei dati. Fine. Niente TRAINING.
+L'utente comune NON PUò creare il progetto. <-------------------
+
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 Come incentiviamo l’utente?
@@ -54,6 +59,10 @@ Ogni quanto tempo aggiorno le reti?
 Questo dipende da alcuni fattori come:
 - A partire da quale data mi serve la rete?
 - Con quanta frequenza la uso?
+
+SI PUò AGGIORNARE LA RETE PARTENDO DALLO STATO ATTUALE
+Qualunquista
+Sorting degli elementi quando vengono caricati
 
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
