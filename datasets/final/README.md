@@ -3,6 +3,7 @@ Each directory D1 -> D7 contains data acquired during a different day by differe
 * D1 to D6 were acquired in different occasions in Ticino, Switzerland in 2017.
 * D7 was acquired by MS and PhD students at Politecnico di Milano in Feb 2018.
 * D8 was acquired by three middle school students at IDSIA in Mar 2018.
+* D9 (very small) was acquired with a few bankers in 2018.
 
 Each dataset contains one class per subdirectory:
 * c0 - rock
