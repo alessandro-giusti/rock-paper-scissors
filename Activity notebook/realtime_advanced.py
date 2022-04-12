@@ -6,8 +6,10 @@ import skimage.io
 import skimage.viewer
 import keras
 import warnings
-
+import matplotlib.pyplot as plt
 import argparse
+from collections import deque
+from cmap_utils import generate_custom_cmap
 parser = argparse.ArgumentParser(description='Rock-paper-scissors realtime demo.')
 parser.add_argument('--fullscreen', action='store_true', help='run in fullscreen')
 args = parser.parse_args()
@@ -16,7 +18,9 @@ args = parser.parse_args()
 model_name="models/model_venus.model"
 ssz=150
 barw=50
-mkviz=False
+mkviz=True
+apply_cmap = False
+cmaps = deque(['viridis'] + generate_custom_cmap())
 
 classimages0=[]
 classimages1=[]
@@ -114,7 +118,6 @@ def drawtinybars(im, values):
         x0, x1 = i*barw, i*barw+barw
         cv2.rectangle(im, (x0,0), (x1, max(0,int(v*barh))), (255,255,255), -1)
 
-
             
 while(True):
     ret, im = cap.read()
@@ -137,10 +140,17 @@ while(True):
                 
         #viz=skimage.transform.rescale(viz, 10, order=0)
         viz=np.concatenate([mkcolumn(h,mapping,im.shape[0]) for h,mapping in zip(hidden,mappings)],1)
+        if apply_cmap:
+            viz=cv2.cvtColor(plt.get_cmap(cmaps[0])(viz[:, :, 0], bytes=True)[:, :, :3], cv2.COLOR_BGR2RGB)
+
         im=np.concatenate([np.pad(im,((0,0),(0,5),(0,0)),mode="constant"),viz],1)
         viz=remap(dense[densemapping])
         viz=skimage.transform.resize(viz,(int(viz.shape[0]/viz.shape[1]*im.shape[1]),im.shape[1]),order=0,preserve_range=True).astype("uint8")
+        if apply_cmap:
+            viz=cv2.cvtColor(plt.get_cmap(cmaps[0])(viz[:, :, 0], bytes=True)[:, :, :3], cv2.COLOR_BGR2RGB)
+
         im=np.concatenate([np.pad(im,((0,5),(0,0),(0,0)),mode="constant"),viz],0)
+
         
     cv2.imshow(windowname,im)
     #cv2.imshow(inner,viz)
@@ -158,10 +168,20 @@ while(True):
         remap_std=0.5
     if key & 0xFF == ord('c'):
         mappings,densemapping=mkmappings_color()
+        apply_cmap = False
         mkviz=True
     if key & 0xFF == ord('g'):
         mappings,densemapping=mkmappings_gray()
+        apply_cmap = False
         mkviz=True
+    if key & 0xFF == ord('m'):
+        mappings,densemapping=mkmappings_color()
+        apply_cmap = True
+        mkviz=True
+    if key & 0xFF == ord('n'):
+        cmaps.rotate(-1)
+    if key & 0xFF == ord('p'):
+        cmaps.rotate(1)
     if key & 0xFF == ord('v'):
         mkviz=not mkviz
     if key & 0xFF == ord('q'):
