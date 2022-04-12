@@ -15,6 +15,7 @@ Cite as
 ## Resources
 
 *Activity notebook* contains the main code (notebook and realtime application), and an example of realtime video.
+A conda environment file is available to setup a minimal environment for running `realtime_advanced.py`.
 
 *RPS App* and *RPS Server* contain (unrealeased and pre-alpha quality) supporting software, i.e. an android app to automate data collection and its server component.
 
